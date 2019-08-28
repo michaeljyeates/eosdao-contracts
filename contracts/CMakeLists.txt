@@ -5,6 +5,6 @@ project(contracts)
 set(EOSIO_WASM_OLD_BEHAVIOR "Off")
 find_package(eosio.cdt)
 
-#add_subdirectory(donation)
+add_subdirectory(donation)
 add_subdirectory(token)
-add_subdirectory(custodian)
+#add_subdirectory(custodian)

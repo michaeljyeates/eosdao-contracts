@@ -1,6 +1,5 @@
 #include <eosio/system.hpp>
 #include "../_contract-shared-headers/dacdirectory_shared.hpp"
-#include "../_contract-shared-headers/migration_helpers.hpp"
 
 void daccustodian::nominatecand(name cand, asset requestedpay) {
     nominatecane(cand, requestedpay, get_self());

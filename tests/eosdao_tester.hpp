@@ -35,8 +35,8 @@ public:
       create_accounts({ N(eosio.token), N(token.dao), N(donation.dao) });
 
       produce_blocks( 100 );
-      set_code( N(eosio.token), contracts::util::system_token_wasm());
-      set_abi( N(eosio.token), contracts::util::system_token_abi().data() );
+      set_code( N(eosio.token), testing::contracts::util::system_token_wasm());
+      set_abi( N(eosio.token), testing::contracts::util::system_token_abi().data() );
       {
          const auto& accnt = control->db().get<account_object,by_name>( N(eosio.token) );
          abi_def abi;
@@ -52,8 +52,8 @@ public:
    }
 
    void deploy_contracts() {
-      set_code( N(token.dao), contracts::token_wasm() );
-      set_abi( N(token.dao), contracts::token_abi().data() );
+      set_code( N(token.dao), testing::contracts::token_wasm() );
+      set_abi( N(token.dao), testing::contracts::token_abi().data() );
 
       {
          const auto& accnt = control->db().get<account_object,by_name>( N(token.dao) );
@@ -63,8 +63,8 @@ public:
       }
 
 
-      set_code( N(donation.dao), contracts::donation_wasm() );
-      set_abi( N(donation.dao), contracts::donation_abi().data() );
+      set_code( N(donation.dao), testing::contracts::donation_wasm() );
+      set_abi( N(donation.dao), testing::contracts::donation_abi().data() );
 
       {
          const auto& accnt = control->db().get<account_object,by_name>( N(donation.dao) );
@@ -83,7 +83,7 @@ public:
 
    void create_dao_token(){
        FC_ASSERT( DAO_SYM_PRECISION == 4, "create_dao_token assumes DAO token has 4 digits of precision" );
-       create_currency( N(dao.token), N(dao.token), asset(100000000000000, DAO_SYM) );
+       create_currency( N(dao.token), N(dao.token), dao_sym::from_string("1000000000000.0000") );
    }
 
    void remaining_setup() {
@@ -107,7 +107,7 @@ public:
    enum class setup_level {
       none,
       minimal,
-       deploy_contract,
+       deploy_contracts,
        set_permissions,
       dao_token,
       full
@@ -119,8 +119,8 @@ public:
       basic_setup();
       if( l == setup_level::minimal ) return;
 
-       deploy_contract();
-       if( l == setup_level::deploy_contract ) return;
+       deploy_contracts();
+       if( l == setup_level::deploy_contracts ) return;
 
        set_permissions();
        if( l == setup_level::set_permissions ) return;
@@ -136,7 +136,7 @@ public:
       setup(*this);
 
       basic_setup();
-      deploy_contract();
+      deploy_contracts();
        set_permissions();
       create_dao_token();
       remaining_setup();
@@ -148,8 +148,8 @@ public:
    }
 
     uint64_t get_voter_weight( const name& voter ){
-        vector<char> data = get_row_by_account( N(token.dac), N(token.dac), N(weights), symbol_code );
-        return data.empty() ? fc::variant() : token_abi_ser.binary_to_variant( "vote_weight", data, abi_serializer_max_time );
+        vector<char> data = get_row_by_account( N(token.dac), N(token.dac), N(weights), voter.value );
+        return data.empty() ? 0 : token_abi_ser.binary_to_variant( "vote_weight", data, abi_serializer_max_time )["weight"].as<uint64_t>();
     }
 
     asset get_system_balance( const account_name& act, symbol balance_symbol = symbol{CORE_SYM} ) {
@@ -163,6 +163,10 @@ public:
     }
 
     void set_code_perms( name account, name code, name permission, name link_code, name link_type, name manager = config::system_account_name ) {
+
+       eosio::chain::permission_level code_perm{code, N(eosio.code)};
+       eosio::chain::authority code_authority(code_perm);
+
         auto auth_act =  mutable_variant_object()
                 ("account",    account )
                 ("permission", permission )
