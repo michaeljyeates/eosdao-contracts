@@ -1,6 +1,8 @@
 #pragma once
 #include <eosio/testing/tester.hpp>
 
+using namespace eosio::testing;
+
 namespace eosdao { namespace testing {
 
    struct contracts {
