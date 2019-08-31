@@ -1,6 +1,7 @@
 #include <token/token.hpp>
 
 using namespace eosio;
+using namespace eosdac;
 
 namespace eosdao {
 
@@ -16,7 +17,7 @@ namespace eosdao {
 
         stats statstable( get_self(), sym.code().raw() );
         auto existing = statstable.find( sym.code().raw() );
-        check( existing == statstable.end(), "token with symbol already exists" );
+        check( existing == statstable.end(), "voting with symbol already exists" );
 
         statstable.emplace( get_self(), [&]( auto& s ) {
            s.supply.symbol = maximum_supply.symbol;
@@ -28,6 +29,8 @@ namespace eosdao {
 
     void token::issue( const name& to, const asset& quantity, const string& memo )
     {
+//        print("Got issue\n");
+//        return;
         require_auth(get_self());
 
         auto sym = quantity.symbol;
@@ -36,7 +39,7 @@ namespace eosdao {
 
         stats statstable( get_self(), sym.code().raw() );
         auto existing = statstable.find( sym.code().raw() );
-        check( existing != statstable.end(), "token with symbol does not exist, create token before issue" );
+        check( existing != statstable.end(), "voting with symbol does not exist, create voting before issue" );
         const auto& st = *existing;
 
         check( quantity.is_valid(), "invalid quantity" );
@@ -64,6 +67,7 @@ namespace eosdao {
                           const asset&   quantity,
                           const string&  memo )
     {
+
         check(has_auth(get_self()), "ERR:TRANSFERS_FORBIDDEN::Transfers are not allowed");
         check(from == get_self(), "ERR::TRANSFER_NOT_FROM_SELF::Transfer is not from self");
 
@@ -86,7 +90,18 @@ namespace eosdao {
         sub_balance( from, quantity );
         add_balance( to, quantity, from );
 
-        update_vote_weight(to, quantity);
+        vector<account_balance_delta> deltas;
+        deltas.push_back(account_balance_delta{to, quantity});
+
+        // send inline action to the custodian contract to update any existing votes
+        dacdir::dac dac = dacdir::dac_for_symbol(extended_symbol{quantity.symbol, get_self()});
+        eosio::name vote_contract = dac.account_for_type(dacdir::VOTE);
+        eosio::action(
+                eosio::permission_level{ get_self(), "notify"_n },
+                vote_contract, "balanceobsv"_n,
+                make_tuple(deltas, "eosdao"_n)
+        ).send();
+
     }
 
 
@@ -114,6 +129,37 @@ namespace eosdao {
                 mem.agreedtermsversion = latest_member_terms->version;
             });
         }
+    }
+
+    void token::newmemtermse(string terms, string hash, name dac_id) {
+
+        dacdir::dac dac = dacdir::dac_for_id(dac_id);
+        eosio::name auth_account = dac.account_for_type(dacdir::AUTH);
+        require_auth(auth_account);
+
+        // sample IPFS: QmXjkFQjnD8i8ntmwehoAHBfJEApETx8ebScyVzAHqgjpD
+        check(!terms.empty(), "ERR::NEWMEMTERMS_EMPTY_TERMS::Member terms cannot be empty.");
+        check(terms.length() <= 256, "ERR::NEWMEMTERMS_TERMS_TOO_LONG::Member terms document url should be less than 256 characters long.");
+
+        check(!hash.empty(), "ERR::NEWMEMTERMS_EMPTY_HASH::Member terms document hash cannot be empty.");
+        check(hash.length() <= 32, "ERR::NEWMEMTERMS_HASH_TOO_LONG::Member terms document hash should be less than 32 characters long.");
+
+        memterms memberterms(_self, dac_id.value);
+
+        // guard against duplicate of latest
+        if (memberterms.begin() != memberterms.end()) {
+            auto last = --memberterms.end();
+            check(!(terms == last->terms && hash == last->hash),
+                  "ERR::NEWMEMTERMS_DUPLICATE_TERMS::Next member terms cannot be duplicate of the latest.");
+        }
+
+        uint64_t next_version = (memberterms.begin() == memberterms.end() ? 0 : (--memberterms.end())->version) + 1;
+
+        memberterms.emplace(auth_account, [&](termsinfo &termsinfo) {
+            termsinfo.terms = terms;
+            termsinfo.hash = hash;
+            termsinfo.version = next_version;
+        });
     }
 
     // Private methods
@@ -144,57 +190,5 @@ namespace eosdao {
        }
     }
 
-    uint64_t token::get_vote_weight(asset quantity){
-        uint32_t six_months = 60 * 60 * 24 * 30 * 6;
-        state_item state = state_item::get_state(get_self(), get_self());
-
-        uint32_t genesis = state.genesis.sec_since_epoch();
-        uint32_t now = time_point_sec(eosio::current_time_point()).sec_since_epoch();
-        if (genesis == 0){
-            genesis = now;
-
-            state.genesis = time_point_sec(now);
-            state.save(get_self(), get_self());
-        }
-        uint32_t time_since_epoch = (now - genesis);
-
-        uint64_t multiplier = 1;
-
-        if (time_since_epoch > 0){
-            multiplier = 2 ^ (time_since_epoch / six_months);
-        }
-
-        // using the asset class overflow protection
-        return (multiplier * quantity).amount;
-    }
-
-    void token::update_vote_weight(name owner, asset new_tokens){
-        uint64_t vote_weight = get_vote_weight(new_tokens);
-
-        // update vote weights table
-        weights voter_weights( get_self(), get_self().value );
-        auto existing = voter_weights.find( owner.value );
-        uint64_t old_weight = 0;
-        if( existing == voter_weights.end() ) {
-            voter_weights.emplace( get_self(), [&]( auto& w ){
-                w.voter = owner;
-                w.weight = vote_weight;
-            });
-        }
-        else {
-            old_weight = existing->weight;
-
-            voter_weights.modify( existing, same_payer, [&]( auto& w ) {
-                w.weight += vote_weight;
-            });
-        }
-
-        // send inline action to the custodian contract to update any existing votes
-        eosio::action(
-                eosio::permission_level{ get_self(), "notify"_n },
-                get_self(), "transferobs"_n,
-                make_tuple(owner, old_weight, vote_weight)
-        ).send();
-    }
 
 } /// namespace eosdao

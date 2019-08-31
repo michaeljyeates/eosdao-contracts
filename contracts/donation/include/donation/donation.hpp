@@ -32,13 +32,16 @@ namespace eosdao {
           * @param from - the account to transfer from,
           * @param to - the account to be transferred to,
           * @param quantity - the quantity of tokens to be transferred,
-          * @param memo - the memo string to accompany the transaction.
+          * @param memo - the memo string to accompany the transaction (ignored).
           */
-         [[eosio::on_notify("eosio.token::transfer"), eosio::action]]
-         void receive( const name&    from,
+         [[eosio::on_notify("eosio.token::transfer")]]
+         void transfer( const name&    from,
                         const name&    to,
                         const asset&   quantity,
                         const string&  memo );
+
+       [[eosio::action]]
+       void dummy();
 
    };
 } /// namespace eosdao

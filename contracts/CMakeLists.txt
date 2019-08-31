@@ -7,4 +7,4 @@ find_package(eosio.cdt)
 
 add_subdirectory(donation)
 add_subdirectory(token)
-#add_subdirectory(custodian)
+add_subdirectory(voting)

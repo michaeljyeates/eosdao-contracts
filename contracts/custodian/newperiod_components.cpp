@@ -236,7 +236,7 @@ void daccustodian::runnewperiod(string message, name dac_id) {
     dacdir::dac found_dac = dacdir::dac_for_id(dac_id);
 
 
-    // Get the token supply of the lockup asset token (eg. EOSDAC)
+    // Get the voting supply of the lockup asset voting (eg. EOSDAC)
     auto tokenStats = stats(
             found_dac.symbol.get_contract(),
             found_dac.symbol.get_symbol().raw()

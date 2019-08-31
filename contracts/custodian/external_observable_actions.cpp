@@ -7,7 +7,7 @@ void daccustodian::capturestake(name from,
     
     auto dac = dacdir::dac_for_id(dac_id);
     auto token_contract = dac.symbol.get_contract();
-    print("token contract: ", token_contract);
+    print("voting contract: ", token_contract);
     require_auth(token_contract);
 
     candidates_table candidates(_self, dac_id.value);
@@ -43,7 +43,7 @@ void daccustodian::transferobsv(name from,
 
     auto dac = dacdir::dac_for_id(dac_id);
     auto token_contract = dac.symbol.get_contract();
-    print("token contract: ", token_contract);
+    print("voting contract: ", token_contract);
     require_auth(token_contract);
 
     votes_table votes_cast_by_members(_self, dac_id.value);

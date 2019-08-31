@@ -60,10 +60,10 @@ namespace eosdac {
         // The contract will direct all payments via the service provider.
         bool should_pay_via_service_provider;
 
-        // Amount of token value in votes required to trigger the initial set of custodians
+        // Amount of voting value in votes required to trigger the initial set of custodians
         uint32_t initial_vote_quorum_percent;
 
-        // Amount of token value in votes required to trigger the allow a new set of custodians to be set after the initial threshold has been achieved.
+        // Amount of voting value in votes required to trigger the allow a new set of custodians to be set after the initial threshold has been achieved.
         uint32_t vote_quorum_percent;
 
         // required number of custodians required to approve different levels of authenticated actions.

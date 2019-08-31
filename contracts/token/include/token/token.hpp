@@ -5,6 +5,9 @@
 #include <eosio/singleton.hpp>
 #include <eosio/action.hpp>
 #include <eosio/eosio.hpp>
+#include <math.h>
+
+#include "dacdirectory_shared.hpp"
 
 #include <string>
 
@@ -86,6 +89,18 @@ namespace eosdao {
        [[eosio::action]]
        void memberrege(name sender, string agreedterms, name dac_id);
 
+
+       /**
+        * Register new terms
+        *
+        * @details Allows a token holder to agree to the terms and conditions of being a member of the DAO
+        *
+        * @param terms - URL of terms
+        * @param hash - md5 hash of the terms document
+        * @param dac_id - the dac_id, used for scoping
+        */
+       [[eosio::action]]
+       void newmemtermse(string terms, string hash, name dac_id);
          /**
           * Get supply method.
           *
@@ -118,29 +133,20 @@ namespace eosdao {
             return ac.balance;
          }
 
+           /* TODO : Use a common eosdac include */
+           struct account_balance_delta {
+               eosio::name    account;
+               eosio::asset   balance_delta;
+           };
+
       private:
 
+        // Standard voting contract tables
+       struct [[eosio::table]] account {
+           asset    balance;
 
-       struct state_item;
-       typedef eosio::singleton<"state"_n, state_item> state_container;
-       struct [[eosio::table("state")]] state_item {
-           eosio::time_point_sec genesis = time_point_sec(0);
-
-           static state_item get_state(eosio::name account, eosio::name scope) {
-               return state_container(account, scope.value).get_or_default(state_item());
-           }
-
-           void save(eosio::name account, eosio::name scope, eosio::name payer = same_payer) {
-               state_container(account, scope.value).set(*this, payer);
-           }
+           uint64_t primary_key()const { return balance.symbol.code().raw(); }
        };
-
-
-         struct [[eosio::table]] account {
-            asset    balance;
-
-            uint64_t primary_key()const { return balance.symbol.code().raw(); }
-         };
 
        struct [[eosio::table]] currency_stats {
            asset    supply;
@@ -150,12 +156,7 @@ namespace eosdao {
            uint64_t primary_key()const { return supply.symbol.code().raw(); }
        };
 
-       struct [[eosio::table]] vote_weight {
-           name     voter;
-           uint64_t weight;
 
-           uint64_t primary_key()const { return voter.value; }
-       };
 
        struct [[eosio::table]] termsinfo {
                string terms;
@@ -185,14 +186,13 @@ namespace eosdao {
        typedef multi_index<"members"_n, member> regmembers;
          typedef eosio::multi_index< "accounts"_n, account > accounts;
          typedef eosio::multi_index< "stat"_n, currency_stats > stats;
-         typedef eosio::multi_index< "weights"_n, vote_weight > weights;
          typedef eosio::multi_index<"memberterms"_n, termsinfo,
                    indexed_by<"bylatestver"_n, const_mem_fun<termsinfo, uint64_t, &termsinfo::by_latest_version> >
            > memterms;
 
+
+         // Internal methods
          void sub_balance( const name& owner, const asset& value );
          void add_balance( const name& owner, const asset& value, const name& ram_payer );
-         uint64_t get_vote_weight(asset quantity);
-         void update_vote_weight(name owner, asset new_tokens);
    };
 } /// namespace eosdao

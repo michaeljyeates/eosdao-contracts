@@ -1,0 +1,96 @@
+#include <voting/voting.hpp>
+
+using namespace eosio;
+
+namespace eosdao {
+
+    void voting::balanceobsv(vector<account_balance_delta> account_balance_deltas, name dac_id) {
+        auto dac = dacdir::dac_for_id(dac_id);
+        auto token_contract = dac.symbol.get_contract();
+        require_auth(token_contract);
+
+        for (auto abd: account_balance_deltas){
+            check(abd.balance_delta.amount > 0, "ERR::INVALID_BALANCE_DELTA::Balance delta must be > 0");
+
+            update_vote_weight(abd.account, abd.balance_delta, dac_id);
+        }
+    }
+
+    void voting::resetweights(name dac_id) {
+        weights voter_weights( get_self(), dac_id.value );
+        auto w = voter_weights.begin();
+
+        while (w != voter_weights.end()){
+            w = voter_weights.erase(w);
+        }
+    }
+
+    void voting::update_vote_weight(name owner, asset new_tokens, name dac_id){
+        uint64_t vote_weight = get_vote_weight(new_tokens, dac_id);
+
+        // update vote weights table
+        weights voter_weights( get_self(), dac_id.value );
+        auto existing = voter_weights.find( owner.value );
+        uint64_t old_weight = 0;
+        if( existing == voter_weights.end() ) {
+            voter_weights.emplace( get_self(), [&]( auto& w ){
+                w.voter = owner;
+                w.weight = vote_weight;
+            });
+
+        }
+        else {
+            old_weight = existing->weight;
+
+            voter_weights.modify( existing, same_payer, [&]( auto& w ) {
+                w.weight += vote_weight;
+            });
+        }
+
+        const asset quantity = asset(vote_weight, new_tokens.symbol);
+
+        vector<account_balance_delta> account_weights;
+        account_weights.push_back(account_balance_delta{owner, quantity});
+
+        auto dac = dacdir::dac_for_id(dac_id);
+        eosio::name custodian_contract = dac.account_for_type(dacdir::CUSTODIAN);
+
+        eosio::action(
+                eosio::permission_level{ get_self(), "notify"_n },
+                custodian_contract, "balanceobsv"_n,
+                make_tuple(account_weights, dac.dac_id)
+        ).send();
+
+        print("notifying balance change to ", custodian_contract, "::balanceobsv");
+    }
+
+
+    uint64_t voting::get_vote_weight(asset quantity, name dac_id){
+        uint32_t six_months = 60 * 60 * 24 * 30 * 6;
+        state_item state = state_item::get_state(get_self(), dac_id);
+
+        uint32_t genesis = state.genesis.sec_since_epoch();
+        uint32_t now = time_point_sec(eosio::current_time_point()).sec_since_epoch();
+        if (genesis == 0){
+            genesis = now;
+
+            state.genesis = time_point_sec(now);
+            state.save(get_self(), dac_id, get_self());
+        }
+        uint32_t time_since_epoch = (now - genesis);
+
+
+        double multiplier = 1.0;
+
+        if (time_since_epoch > 0){
+            multiplier = pow(2, (double(time_since_epoch) / double(six_months)));
+        }
+
+        // using the asset class overflow protection
+        uint64_t weight = (uint64_t)(multiplier * (double)quantity.amount);
+
+        return weight;
+    }
+
+
+} /// namespace eosdao
