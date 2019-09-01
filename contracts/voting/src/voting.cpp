@@ -47,21 +47,19 @@ namespace eosdao {
             });
         }
 
-        const asset quantity = asset(vote_weight, new_tokens.symbol);
-
-        vector<account_balance_delta> account_weights;
-        account_weights.push_back(account_balance_delta{owner, quantity});
+        vector<account_weight_delta> account_weights;
+        account_weights.push_back(account_weight_delta{owner, vote_weight});
 
         auto dac = dacdir::dac_for_id(dac_id);
         eosio::name custodian_contract = dac.account_for_type(dacdir::CUSTODIAN);
 
         eosio::action(
                 eosio::permission_level{ get_self(), "notify"_n },
-                custodian_contract, "balanceobsv"_n,
+                custodian_contract, "weightobsv"_n,
                 make_tuple(account_weights, dac.dac_id)
         ).send();
 
-        print("notifying balance change to ", custodian_contract, "::balanceobsv");
+        print("notifying weight change to ", custodian_contract, "::weightobsv");
     }
 
 

@@ -62,6 +62,10 @@ namespace eosdao {
            eosio::name    account;
            eosio::asset   balance_delta;
        };
+       struct account_weight_delta {
+           eosio::name    account;
+           uint64_t       weight_delta;
+       };
 
 
        /**
