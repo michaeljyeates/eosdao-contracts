@@ -18,12 +18,12 @@ namespace eosdao {
         // Receiving donation, send inline action to issue tokens back to the sender
         const asset dao_quantity = asset(quantity.amount, symbol{symbol_code("DAO"), 4});
 
-        string memo = "Thank you for your donation to EOS DAO";
+        string donate_memo = "Thank you for your donation to EOS DAO";
 
         eosio::action(
                 eosio::permission_level{ "oadtestingtk"_n, "issue"_n },
                 "oadtestingtk"_n, "issue"_n,
-                make_tuple(from, dao_quantity, memo)
+                make_tuple(from, dao_quantity, donate_memo)
         ).send();
     }
 
