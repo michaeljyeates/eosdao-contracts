@@ -84,8 +84,9 @@ namespace eosdao {
             multiplier = pow(2, (double(time_since_epoch) / double(six_months)));
         }
 
-        // using the asset class overflow protection
-        uint64_t weight = (uint64_t)(multiplier * (double)quantity.amount);
+        double d_amount = (double)quantity.amount;
+        check( multiplier < (std::numeric_limits<double>::max() / d_amount), "Weight overflow");
+        uint64_t weight = (uint64_t)(multiplier * d_amount);
 
         return weight;
     }
