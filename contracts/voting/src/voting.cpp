@@ -68,7 +68,7 @@ namespace eosdao {
         state_item state = state_item::get_state(get_self(), dac_id);
 
         uint32_t genesis = state.genesis.sec_since_epoch();
-        uint32_t now = time_point_sec(eosio::current_time_point()).sec_since_epoch();
+        uint32_t now = eosio::current_time_point().sec_since_epoch();
         if (genesis == 0){
             genesis = now;
 
