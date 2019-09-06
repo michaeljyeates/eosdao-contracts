@@ -79,7 +79,6 @@ namespace eosdao {
         stats statstable( get_self(), sym.raw() );
         const auto& st = statstable.get( sym.raw() );
 
-        require_recipient( from );
         require_recipient( to );
 
         check( quantity.is_valid(), "invalid quantity" );
