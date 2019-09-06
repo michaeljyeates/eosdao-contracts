@@ -2,14 +2,18 @@
 
 #include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
+#include "dacdirectory_shared.hpp"
 
 #include <string>
 
+using namespace eosdac;
 using namespace eosio;
 using namespace std;
 
 namespace eosdao {
 
+//    using namespace eosio;
+//    using namespace std;
    /**
     * @defgroup eosdaodonate donation
     * @ingroup eosiocontracts
