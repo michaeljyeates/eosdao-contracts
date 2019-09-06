@@ -98,7 +98,7 @@ namespace eosdao {
         eosio::action(
                 eosio::permission_level{ get_self(), "notify"_n },
                 vote_contract, "balanceobsv"_n,
-                make_tuple(deltas, "eosdao"_n)
+                make_tuple(deltas, dac.dac_id)
         ).send();
 
     }
