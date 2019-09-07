@@ -8,8 +8,10 @@ namespace eosdao {
         auto dac = dacdir::dac_for_id(dac_id);
         auto token_contract = dac.symbol.get_contract();
         require_auth(token_contract);
+        auto dac_symbol = dac.symbol.get_symbol();
 
         for (auto abd: account_balance_deltas){
+            check(dac_symbol == abd.balance_delta.symbol, "ERR::SYM_NOT_DAC::The symbol of the balance delta does not match this DAC");
             check(abd.balance_delta.amount > 0, "ERR::INVALID_BALANCE_DELTA::Balance delta must be > 0");
 
             update_vote_weight(abd.account, abd.balance_delta, dac_id);
