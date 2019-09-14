@@ -1,8 +1,14 @@
 add_contract(voting voting ${CMAKE_CURRENT_SOURCE_DIR}/src/voting.cpp)
+find_path(LIBEOSDAC_INCLUDE_DIR NAMES libeosdac/libeosdac.hpp HINTS external)
+
+if((NOT LIBEOSDAC_INCLUDE_DIR) OR (NOT EXISTS ${LIBEOSDAC_INCLUDE_DIR}))
+    message("Unable to find libeosdac ${LIBEOSDAC_INCLUDE_DIR}")
+endif()
 
 target_include_directories(voting
    PUBLIC
-   ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${LIBEOSDAC_INCLUDE_DIR})
 
 set_target_properties(voting
    PROPERTIES

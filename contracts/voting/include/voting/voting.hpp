@@ -4,7 +4,8 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 #include <math.h>
-#include "./dacdirectory_shared.hpp"
+
+#include <libeosdac/directory.hpp>
 
 using namespace eosdac;
 using namespace eosio;

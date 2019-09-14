@@ -1,11 +1,12 @@
 #include <voting/voting.hpp>
 
 using namespace eosio;
+using namespace eosdac;
 
 namespace eosdao {
 
     void voting::balanceobsv(vector<account_balance_delta> account_balance_deltas, name dac_id) {
-        auto dac = dacdir::dac_for_id(dac_id);
+        auto dac = directory::dac_for_id(dac_id);
         auto token_contract = dac.symbol.get_contract();
         require_auth(token_contract);
 
@@ -50,8 +51,8 @@ namespace eosdao {
         vector<account_weight_delta> account_weights;
         account_weights.push_back(account_weight_delta{owner, vote_weight});
 
-        auto dac = dacdir::dac_for_id(dac_id);
-        eosio::name custodian_contract = dac.account_for_type(dacdir::CUSTODIAN);
+        auto dac = directory::dac_for_id(dac_id);
+        eosio::name custodian_contract = dac.account_for_type(directory::types::CUSTODIAN);
 
         eosio::action(
                 eosio::permission_level{ get_self(), "notify"_n },

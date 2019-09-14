@@ -2,6 +2,7 @@
 
 using namespace eosio;
 using namespace eosdac;
+using namespace eosdac::token;
 
 namespace eosdao {
 
@@ -90,12 +91,18 @@ namespace eosdao {
         sub_balance( from, quantity );
         add_balance( to, quantity, from );
 
-        vector<account_balance_delta> deltas;
-        deltas.push_back(account_balance_delta{to, quantity});
+        struct account_balance_delta {
+            name    account;
+            asset   balance_delta;
+        };
+        vector<notify::types::account_balance_delta> deltas;
+        deltas.push_back(notify::types::account_balance_delta{to, quantity});
 
         // send inline action to the custodian contract to update any existing votes
-        dacdir::dac dac = dacdir::dac_for_symbol(extended_symbol{quantity.symbol, get_self()});
-        eosio::name vote_contract = dac.account_for_type(dacdir::VOTE);
+        directory::types::dac dac = directory::dac_for_symbol(extended_symbol{quantity.symbol, get_self()});
+        eosio::name vote_contract = dac.account_for_type(directory::types::ROUTER);
+//        auto obsv_action = notify::balanceobsv_action(vote_contract, { { get_self(), "notify"_n } });
+//        obsv_action.send(deltas, "eosdao"_n);
         eosio::action(
                 eosio::permission_level{ get_self(), "notify"_n },
                 vote_contract, "balanceobsv"_n,
@@ -109,22 +116,22 @@ namespace eosdao {
         // agreedterms is expected to be the member terms document hash
         require_auth(sender);
 
-        memterms memberterms(_self, dac_id.value);
+        tables::member_terms_table memberterms(_self, dac_id.value);
 
         check(memberterms.begin() != memberterms.end(), "ERR::MEMBERREG_NO_VALID_TERMS::No valid member terms found.");
 
         auto latest_member_terms = (--memberterms.end());
         check(latest_member_terms->hash == agreedterms, "ERR::MEMBERREG_NOT_LATEST_TERMS::Agreed terms isn't the latest.");
-        regmembers registeredgmembers = regmembers(_self, dac_id.value);
+        member_table registeredgmembers = member_table(_self, dac_id.value);
 
         auto existingMember = registeredgmembers.find(sender.value);
         if (existingMember != registeredgmembers.end()) {
-            registeredgmembers.modify(existingMember, sender, [&](member &mem) {
+            registeredgmembers.modify(existingMember, sender, [&](types::member_type &mem) {
                 mem.agreedtermsversion = latest_member_terms->version;
             });
         }
         else {
-            registeredgmembers.emplace(sender, [&](member &mem) {
+            registeredgmembers.emplace(sender, [&](types::member_type &mem) {
                 mem.sender = sender;
                 mem.agreedtermsversion = latest_member_terms->version;
             });
@@ -133,8 +140,8 @@ namespace eosdao {
 
     void token::newmemtermse(string terms, string hash, name dac_id) {
 
-        dacdir::dac dac = dacdir::dac_for_id(dac_id);
-        eosio::name auth_account = dac.account_for_type(dacdir::AUTH);
+        directory::types::dac dac = directory::dac_for_id(dac_id);
+        eosio::name auth_account = dac.account_for_type(directory::types::AUTH);
         require_auth(auth_account);
 
         // sample IPFS: QmXjkFQjnD8i8ntmwehoAHBfJEApETx8ebScyVzAHqgjpD
@@ -144,7 +151,7 @@ namespace eosdao {
         check(!hash.empty(), "ERR::NEWMEMTERMS_EMPTY_HASH::Member terms document hash cannot be empty.");
         check(hash.length() <= 32, "ERR::NEWMEMTERMS_HASH_TOO_LONG::Member terms document hash should be less than 32 characters long.");
 
-        memterms memberterms(_self, dac_id.value);
+        tables::member_terms_table memberterms(_self, dac_id.value);
 
         // guard against duplicate of latest
         if (memberterms.begin() != memberterms.end()) {
@@ -155,7 +162,7 @@ namespace eosdao {
 
         uint64_t next_version = (memberterms.begin() == memberterms.end() ? 0 : (--memberterms.end())->version) + 1;
 
-        memberterms.emplace(auth_account, [&](termsinfo &termsinfo) {
+        memberterms.emplace(auth_account, [&](types::termsinfo_type &termsinfo) {
             termsinfo.terms = terms;
             termsinfo.hash = hash;
             termsinfo.version = next_version;
