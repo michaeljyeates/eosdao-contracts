@@ -1,5 +1,5 @@
 add_contract(donation donation ${CMAKE_CURRENT_SOURCE_DIR}/src/donation.cpp)
-find_path(LIBEOSDAC_INCLUDE_DIR NAMES libeosdac/libeosdac.hpp HINTS external)
+find_path(LIBEOSDAC_INCLUDE_DIR NAMES libeosdac/libeosdac.hpp HINTS external NO_CMAKE_FIND_ROOT_PATH)
 
 if((NOT LIBEOSDAC_INCLUDE_DIR) OR (NOT EXISTS ${LIBEOSDAC_INCLUDE_DIR}))
     message("Unable to find libeosdac ${LIBEOSDAC_INCLUDE_DIR}")
