@@ -1,0 +1,3 @@
+[submodule "external/libeosdac"]
+	path = external/libeosdac
+	url = https://github.com/eosdac/libeosdac.git

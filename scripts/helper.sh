@@ -55,16 +55,14 @@ function eosio-directory-prompt() {
           echo "No default EOSIO installations detected..."
           PROCEED=n
         else
-          printf "Is EOSIO installed in the default location: $HOME/eosio/$EOSIO_VERSION (y/n)" && read -p " " PROCEED
+          printf "Is EOSIO installed in the default location: $HOME/eosio/$EOSIO_VERSION (Y/n)" && read -p " " PROCEED
         fi
       fi
       echo ""
       case $PROCEED in
-        "" )
-          echo "Is EOSIO installed in the default location?";;
-        0 | true | [Yy]* )
+        0 | true | "" | [Yy]* )
           break;;
-        1 | false | [Nn]* )
+        1 | [Nn]* )
           if [[ $PROMPT_EOSIO_DIRS ]]; then
             echo "Found these compatible EOSIO versions in the default location."
             printf "$HOME/eosio/%s\n" "${PROMPT_EOSIO_DIRS[@]}"
@@ -86,13 +84,11 @@ function cdt-directory-prompt() {
     echo 'No EOSIO.CDT location was specified.'
     while true; do
       if [[ $NONINTERACTIVE != true ]]; then
-        printf "Is EOSIO.CDT installed in the default location? /usr/local/eosio.cdt (y/n)" && read -p " " PROCEED
+        printf "Is EOSIO.CDT installed in the default location? /usr/local/eosio.cdt (Y/n)" && read -p " " PROCEED
       fi
       echo ""
       case $PROCEED in
-        "" )
-          echo "Is EOSIO.CDT installed in the default location?";;
-        0 | true | [Yy]* )
+        0 | true | "" | [Yy]* )
           break;;
         1 | false | [Nn]* )
           printf "Enter the installation location of EOSIO.CDT:" && read -e -p " " CDT_DIR_PROMPT;
