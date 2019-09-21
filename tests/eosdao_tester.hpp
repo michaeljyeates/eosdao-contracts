@@ -28,6 +28,20 @@ namespace eosdao {
 
 class eosdao_tester : public TESTER {
 public:
+    struct contr_config {
+        extended_asset lockupasset;
+        uint8_t maxvotes = 5;
+        uint8_t numelected = 3;
+        uint32_t periodlength = 7 * 24 * 60 * 60;
+        bool should_pay_via_service_provider;
+        uint32_t initial_vote_quorum_percent;
+        uint32_t vote_quorum_percent;
+        uint8_t auth_threshold_high;
+        uint8_t auth_threshold_mid;
+        uint8_t auth_threshold_low;
+        uint32_t lockup_release_time_delay;
+        extended_asset requested_pay_max;
+    };
 
    void basic_setup() {
        printf("Running basic_setup...\n");
@@ -127,6 +141,30 @@ public:
        }
    }
 
+    void configure_contracts() {
+        printf("Running configure_contracts...\n");
+
+        extended_asset lockup = extended_asset(asset(0, symbol(4, "DAO")), N(token.dao));
+        extended_asset reqpay = extended_asset(asset(1, symbol(4, "EOS")), N(eosio.token));
+
+        contr_config config = {
+            lockup, // extended_asset lockupasset
+            5, //uint8_t maxvotes = 5;
+            12, //uint8_t numelected = 3;
+            7 * 24 * 60 * 60, //uint32_t periodlength = 7 * 24 * 60 * 60;
+            false, //bool should_pay_via_service_provider;
+            1, //uint32_t initial_vote_quorum_percent;
+            1, //uint32_t vote_quorum_percent;
+            10, //uint8_t auth_threshold_high;
+            9, //uint8_t auth_threshold_mid;
+            7, //uint8_t auth_threshold_low;
+            600, //uint32_t lockup_release_time_delay;
+            reqpay //extended_asset requested_pay_max;
+        };
+
+        configure_custodian(config, N(eosdao), N(auth.dao));
+   }
+
    void set_permissions(){
        printf("Running set_permissions...\n");
        // Add code rights for the donation contract so it can call issue
@@ -202,6 +240,7 @@ public:
        set_permissions,
       dao_token,
        directory,
+       configure_contracts,
       full
    };
 
@@ -228,6 +267,10 @@ public:
        if( l == setup_level::directory ) return;
        produce_blocks();
 
+       configure_contracts();
+       if( l == setup_level::configure_contracts ) return;
+       produce_blocks();
+
       remaining_setup();
    }
 
@@ -249,11 +292,11 @@ public:
    }
 
     uint64_t get_voter_weight( const name& voter ){
-        vector<char> data = get_row_by_account( N(token.dac), N(token.dac), N(weights), voter.value );
+        vector<char> data = get_row_by_account( N(voting.dao), N(eosdao), N(weights), voter );
         if (data.empty()){
             printf("DATA empty in get_voter_weight\n");
         }
-        return data.empty() ? 0 : token_abi_ser.binary_to_variant( "vote_weight", data, abi_serializer_max_time )["weight"].as<uint64_t>();
+        return data.empty() ? 0 : voting_abi_ser.binary_to_variant( "vote_weight", data, abi_serializer_max_time )["weight"].as<uint64_t>();
     }
 
     asset get_system_balance( const account_name& act, symbol balance_symbol = symbol{CORE_SYM} ) {
@@ -409,6 +452,30 @@ public:
                 ("dac_id",  dac_id )
                 ("account", account )
                 ("type",    type )
+        );
+    }
+
+    void configure_custodian( const contr_config newconfig, const name& dac_id, const name& manager = config::system_account_name ) {
+
+
+        base_tester::push_action( N(steward.dao), N(updateconfige), manager, mutable_variant_object()
+                ("newconfig",
+                        mutable_variant_object()
+                            ("lockupasset", newconfig.lockupasset)
+                            ("maxvotes", newconfig.maxvotes)
+                            ("numelected", newconfig.numelected)
+                            ("periodlength", newconfig.periodlength)
+                            ("should_pay_via_service_provider", newconfig.should_pay_via_service_provider)
+                            ("initial_vote_quorum_percent", newconfig.initial_vote_quorum_percent)
+                            ("vote_quorum_percent", newconfig.vote_quorum_percent)
+                            ("auth_threshold_high", newconfig.auth_threshold_high)
+                            ("auth_threshold_mid", newconfig.auth_threshold_mid)
+                            ("auth_threshold_low", newconfig.auth_threshold_low)
+                            ("lockup_release_time_delay", newconfig.lockup_release_time_delay)
+                            ("requested_pay_max", newconfig.requested_pay_max)
+
+                )
+                ("dac_id",  dac_id )
         );
     }
 
