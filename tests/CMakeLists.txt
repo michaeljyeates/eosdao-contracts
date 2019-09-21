@@ -36,6 +36,6 @@ foreach(TEST_SUITE ${UNIT_TESTS}) # create an independent target for each test s
   if (NOT "" STREQUAL "${SUITE_NAME}") # ignore empty lines
     execute_process(COMMAND bash -c "echo ${SUITE_NAME} | sed -e 's/s$//' | sed -e 's/_test$//'" OUTPUT_VARIABLE TRIMMED_SUITE_NAME OUTPUT_STRIP_TRAILING_WHITESPACE) # trim "_test" or "_tests" from the end of ${SUITE_NAME}
     # to run unit_test with all log from blockchain displayed, put "--verbose" after "--", i.e. "unit_test -- --verbose"
-    add_test(NAME ${TRIMMED_SUITE_NAME}_unit_test COMMAND unit_test --run_test=${SUITE_NAME} --report_level=detailed --color_output)
+    add_test(NAME ${TRIMMED_SUITE_NAME}_unit_test COMMAND unit_test -- --verbose --run_test=${SUITE_NAME} --report_level=detailed --color_output )
   endif()
 endforeach(TEST_SUITE)

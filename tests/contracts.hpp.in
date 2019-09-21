@@ -8,12 +8,16 @@ namespace eosdao { namespace testing {
    struct contracts {
        static std::vector<uint8_t> donation_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/donation/donation.wasm"); }
        static std::vector<char>    donation_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/donation/donation.abi"); }
-       static std::vector<uint8_t> token_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/token/token.wasm"); }
-       static std::vector<char>    token_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/token/token.abi"); }
+       static std::vector<uint8_t> token_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/voting/voting.wasm"); }
+       static std::vector<char>    token_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/voting/voting.abi"); }
+       static std::vector<uint8_t> custodian_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../../../eosdac-contracts/_compiled_contracts/daccustodian/mainnet/daccustodian/daccustodian.wasm"); }
+       static std::vector<char>    custodian_abi() { return read_abi("${CMAKE_BINARY_DIR}/../../../eosdac-contracts/_compiled_contracts/daccustodian/mainnet/daccustodian/daccustodian.abi"); }
 
        struct util {
-           static std::vector<uint8_t> system_token_wasm() { return read_wasm("${CMAKE_SOURCE_DIR}/test_contracts/eosio.token/token.wasm"); }
-           static std::vector<char>    system_token_abi() { return read_abi("${CMAKE_SOURCE_DIR}/test_contracts/eosio.token/eosio.token.abi"); }
+           static std::vector<uint8_t> system_token_wasm() { return read_wasm("${CMAKE_SOURCE_DIR}/test_contracts/eosio.voting.wasm"); }
+           static std::vector<char>    system_token_abi() { return read_abi("${CMAKE_SOURCE_DIR}/test_contracts/eosio.voting.abi"); }
+           static std::vector<uint8_t> system_wasm() { return read_wasm("${CMAKE_SOURCE_DIR}/test_contracts/eosio.system.wasm"); }
+           static std::vector<char>    system_abi() { return read_abi("${CMAKE_SOURCE_DIR}/test_contracts/eosio.system.abi"); }
        };
    };
 }} //ns eosdao::testing
