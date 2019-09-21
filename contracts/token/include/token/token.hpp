@@ -7,16 +7,19 @@
 #include <eosio/eosio.hpp>
 #include <math.h>
 
-#include "dacdirectory_shared.hpp"
+#include <libeosdac/directory.hpp>
+#include <libeosdac/token.hpp>
+#include <libeosdac/notify.hpp>
 
 #include <string>
 
-using namespace eosio;
-using namespace std;
 
 namespace eosdao {
 
-   using std::string;
+    using namespace eosio;
+    using namespace std;
+    using namespace eosdac::token::tables;
+    using namespace eosdac::token::types;
 
    /**
     * @defgroup eosiotoken eosio.token
@@ -133,11 +136,6 @@ namespace eosdao {
             return ac.balance;
          }
 
-           /* TODO : Use a common eosdac include */
-           struct account_balance_delta {
-               eosio::name    account;
-               eosio::asset   balance_delta;
-           };
 
       private:
 
@@ -156,43 +154,17 @@ namespace eosdao {
            uint64_t primary_key()const { return supply.symbol.code().raw(); }
        };
 
+       typedef multi_index< "accounts"_n, account > accounts;
+       typedef multi_index< "stat"_n, currency_stats > stats;
 
+       /* We use the inherited eosdac definitions, but for abigen we need this.
+        * The struct name is used as table name.  This is not used otherwise */
+       struct [[ eosio::table ]] members : member_type {};
+       struct [[ eosio::table ]] memterms : termsinfo_type {};
 
-       struct [[eosio::table]] termsinfo {
-               string terms;
-               string hash;
-               uint64_t version;
-
-               termsinfo() : terms(""), hash(""), version(0) {}
-
-               termsinfo(string _terms, string _hash, uint64_t _version)
-               : terms(_terms), hash(_hash), version(_version) {}
-
-               uint64_t primary_key() const { return version; }
-               uint64_t by_latest_version() const { return UINT64_MAX - version; }
-
-               EOSLIB_SERIALIZE(termsinfo, (terms)(hash)(version))
-       };
-
-
-       struct [[eosio::table]] member {
-           name sender;
-           uint64_t agreedtermsversion;
-
-           uint64_t primary_key() const { return sender.value; }
-       };
-
-
-       typedef multi_index<"members"_n, member> regmembers;
-         typedef eosio::multi_index< "accounts"_n, account > accounts;
-         typedef eosio::multi_index< "stat"_n, currency_stats > stats;
-         typedef eosio::multi_index<"memberterms"_n, termsinfo,
-                   indexed_by<"bylatestver"_n, const_mem_fun<termsinfo, uint64_t, &termsinfo::by_latest_version> >
-           > memterms;
-
-
-         // Internal methods
-         void sub_balance( const name& owner, const asset& value );
-         void add_balance( const name& owner, const asset& value, const name& ram_payer );
+       // Internal methods
+       void sub_balance( const name& owner, const asset& value );
+       void add_balance( const name& owner, const asset& value, const name& ram_payer );
    };
 } /// namespace eosdao
+//struct eosdao::member = eosdac::token::types::member_type;
