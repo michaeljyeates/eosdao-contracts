@@ -260,8 +260,18 @@ public:
 
     void set_code_perms( name account, name code, name permission, name link_code, name link_type, name manager = config::system_account_name ) {
 
-       eosio::chain::permission_level code_perm{code, N(eosio.code)};
-       eosio::chain::authority code_authority(code_perm);
+       permission_level code_perm{code, N(eosio.code)};
+       permission_level_weight code_perm_weight{code_perm, 1};
+
+       vector<key_weight> key_weights{};
+       vector<permission_level_weight> permission_weights{code_perm_weight};
+       vector<wait_weight> wait_weights{};
+
+       authority code_authority(
+               1,
+               key_weights,
+               permission_weights,
+               wait_weights);
 
         auto auth_act =  mutable_variant_object()
                 ("account",    account )
