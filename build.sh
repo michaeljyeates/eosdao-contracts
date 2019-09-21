@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-CPU_CORES=$(getconf _NPROCESSORS_ONLN)
-GREEN='\033[0;32m'
+printf "\t=========== Building eosdao.contracts ===========\n\n"
+RED='\033[0;31m'
 NC='\033[0m'
 
-printf "\t${GREEN}=========== Building eosdao contracts with ${CPU_CORES} cores ===========${NC}\n\n"
-
+CPU_CORES=$(getconf _NPROCESSORS_ONLN)
 mkdir -p build
 pushd build &> /dev/null
 cmake ../

@@ -36,7 +36,7 @@ public:
        create_accounts({ N(eosio.token), N(eosio.ram), N(eosio.ramfee), N(eosio.stake),
                          N(eosio.bpay), N(eosio.vpay), N(eosio.saving), N(eosio.names), N(eosio.rex) });
 
-      create_accounts({ N(token.dao), N(donation.dao), N(steward.dao) });
+      create_accounts({ N(auth.dao), N(token.dao), N(donation.dao), N(voting.dao), N(steward.dao), N(dacdirectory) });
 
       produce_blocks( 100 );
        set_code( N(eosio.token), testing::contracts::util::system_token_wasm());
@@ -75,21 +75,19 @@ public:
 
    void deploy_contracts() {
        printf("Running deploy_contracts...\n");
-      set_code( N(token.dao), testing::contracts::token_wasm() );
-      set_abi( N(token.dao), testing::contracts::token_abi().data() );
 
-      {
-         const auto& accnt = control->db().get<account_object,by_name>( N(token.dao) );
-         abi_def abi;
-         BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
-         token_abi_ser.set_abi(abi, abi_serializer_max_time);
-      }
+       set_code( N(token.dao), testing::contracts::token_wasm() );
+       set_abi( N(token.dao), testing::contracts::token_abi().data() );
+       {
+           const auto& accnt = control->db().get<account_object,by_name>( N(token.dao) );
+           abi_def abi;
+           BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
+           token_abi_ser.set_abi(abi, abi_serializer_max_time);
+       }
 
 
        set_code( N(donation.dao), testing::contracts::donation_wasm() );
        set_abi( N(donation.dao), testing::contracts::donation_abi().data() );
-
-
        {
            const auto& accnt = control->db().get<account_object,by_name>( N(donation.dao) );
            abi_def abi;
@@ -98,26 +96,54 @@ public:
        }
 
 
-       set_code( N(steward.dao), testing::contracts::custodian_wasm() );
-       set_abi( N(steward.dao), testing::contracts::custodian_abi().data() );
+       set_code( N(voting.dao), testing::contracts::voting_wasm() );
+       set_abi( N(voting.dao), testing::contracts::voting_abi().data() );
+       {
+           const auto& accnt = control->db().get<account_object,by_name>( N(voting.dao) );
+           abi_def abi;
+           BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
+           voting_abi_ser.set_abi(abi, abi_serializer_max_time);
+       }
 
 
+       set_code( N(steward.dao), testing::contracts::eosdac::custodian_wasm() );
+       set_abi( N(steward.dao), testing::contracts::eosdac::custodian_abi().data() );
        {
            const auto& accnt = control->db().get<account_object,by_name>( N(steward.dao) );
            abi_def abi;
            BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
            custodian_abi_ser.set_abi(abi, abi_serializer_max_time);
        }
+
+
+       set_code( N(dacdirectory), testing::contracts::eosdac::directory_wasm() );
+       set_abi( N(dacdirectory), testing::contracts::eosdac::directory_abi().data() );
+
+       {
+           const auto& accnt = control->db().get<account_object,by_name>( N(dacdirectory) );
+           abi_def abi;
+           BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
+           directory_abi_ser.set_abi(abi, abi_serializer_max_time);
+       }
    }
 
    void set_permissions(){
        printf("Running set_permissions...\n");
-       // Add code rights to the voting contract so that it can transfer from itself
-       set_code_perms(N(token.dao), N(token.dao), N(xfer), N(token.dao), N(transfer));
        // Add code rights for the donation contract so it can call issue
-       set_code_perms(N(token.dao), N(donation.dao), N(issue), N(token.dao), N(issue));
+       set_code_perms(N(token.dao), N(donation.dao), N(issue));
+       link_perms(N(token.dao), N(token.dao), N(issue), N(issue));
+       // Add code rights to the token contract so that it can transfer from itself
+       set_code_perms(N(token.dao), N(token.dao), N(xfer));
+       link_perms(N(token.dao), N(token.dao), N(transfer), N(xfer));
        // Notify from voting contract to custodian
-       set_code_perms(N(token.dao), N(token.dao), N(notify), N(steward.dao), N(weightobsv));
+       set_code_perms(N(token.dao), N(token.dao), N(notify));
+       link_perms(N(token.dao), N(voting.dao), N(balanceobsv), N(notify));
+//       link_perms(N(token.dao), N(voting.dao), N(weightobsv), N(notify));
+
+       // so the voting contract can notify the custodian contract
+       set_code_perms(N(voting.dao), N(voting.dao), N(notify));
+       link_perms(N(voting.dao), N(steward.dao), N(weightobsv), N(notify));
+
    }
 
    void create_dao_token(){
@@ -126,10 +152,27 @@ public:
        create_currency( N(token.dao), N(token.dao), dao_sym::from_string("1000000000000.0000") );
    }
 
+   void setup_directory(){
+       printf("Running setup_directory...\n");
+
+//       AUTH = 0,
+//       TREASURY = 1,
+//       CUSTODIAN = 2,
+//       MSIGS = 3,
+//       SERVICE = 5,
+//       PROPOSALS = 6,
+//       ESCROW = 7,
+
+       extended_symbol es = extended_symbol{symbol(4, "DAO"), N(token.dao)};
+       regdac( N(auth.dao), N(eosdao), es, "EOS DAO", N(auth.dao) );
+       regaccount( N(eosdao), N(auth.dao), 0, N(auth.dao) );
+       regaccount( N(eosdao), N(steward.dao), 2, N(auth.dao) );
+       regaccount( N(eosdao), N(voting.dao), 8, N(auth.dao) );
+   }
+
    void remaining_setup() {
        printf("Running remaining_setup...\n");
        produce_blocks();
-
 
        create_account_with_resources( N(donor1.dao), config::system_account_name, core_sym::from_string("1000.0000"), false );
        create_account_with_resources( N(donor2.dao), config::system_account_name, core_sym::from_string("1000.0000"), false );
@@ -158,6 +201,7 @@ public:
        deploy_contracts,
        set_permissions,
       dao_token,
+       directory,
       full
    };
 
@@ -166,15 +210,23 @@ public:
 
       basic_setup();
       if( l == setup_level::minimal ) return;
+       produce_blocks();
 
        deploy_contracts();
        if( l == setup_level::deploy_contracts ) return;
+       produce_blocks();
 
        set_permissions();
        if( l == setup_level::set_permissions ) return;
+       produce_blocks();
 
       create_dao_token();
       if( l == setup_level::dao_token ) return;
+       produce_blocks();
+
+       setup_directory();
+       if( l == setup_level::directory ) return;
+       produce_blocks();
 
       remaining_setup();
    }
@@ -187,6 +239,7 @@ public:
       deploy_contracts();
        set_permissions();
       create_dao_token();
+       setup_directory();
       remaining_setup();
    }
 
@@ -258,7 +311,7 @@ public:
     }
 
 
-    void set_code_perms( name account, name code, name permission, name link_code, name link_type, name manager = config::system_account_name ) {
+    void set_code_perms( name account, name code, name permission, name manager = config::system_account_name ) {
 
        permission_level code_perm{code, N(eosio.code)};
        permission_level_weight code_perm_weight{code_perm, 1};
@@ -278,15 +331,22 @@ public:
                 ("permission", permission )
                 ("parent",     "active" )
                 ("auth",       code_authority );
-        auto link_act =  mutable_variant_object()
-                ("account",     account )
-                ("code",        link_code )
-                ("type",        link_type )
-                ("requirement", permission );
 
         base_tester::push_action(N(eosio), N(updateauth), account, auth_act );
-        base_tester::push_action(N(eosio), N(linkauth), account, link_act );
+
+        produce_block();
     }
+
+    void link_perms( name account, name code, name type, name requirement, name manager = config::system_account_name ){
+
+        auto link_act =  mutable_variant_object()
+                ("account",     account )
+                ("code",        code )
+                ("type",        type )
+                ("requirement", requirement );
+
+        base_tester::push_action(N(eosio), N(linkauth), account, link_act );
+   }
 
     void create_currency( name contract, name manager, asset maxsupply ) {
         auto act =  mutable_variant_object()
@@ -329,29 +389,54 @@ public:
         );
     }
 
+    void regdac( const name& owner, const name& dac_id, const extended_symbol& dac_symbol, const std::string& title, const name& manager = config::system_account_name ) {
+
+        vector<std::map<uint8_t, name>> refs;
+        vector<std::map<uint8_t, name>> accounts;
+
+        base_tester::push_action( N(dacdirectory), N(regdac), manager, mutable_variant_object()
+                ("owner",      owner)
+                ("dac_id",     dac_id )
+                ("dac_symbol", dac_symbol )
+                ("title",      title )
+                ("refs",       refs )
+                ("accounts",   accounts )
+        );
+    }
+
+    void regaccount( const name& dac_id, const name& account, const uint8_t type, const name& manager = config::system_account_name ) {
+        base_tester::push_action( N(dacdirectory), N(regaccount), manager, mutable_variant_object()
+                ("dac_id",  dac_id )
+                ("account", account )
+                ("type",    type )
+        );
+    }
+
     fc::variant get_system_stats( const string& symbolname ) {
-       auto symb = eosio::chain::symbol::from_string(symbolname);
-       auto symbol_code = symb.to_symbol_code().value;
-       vector<char> data = get_row_by_account( N(eosio.token), symbol_code, N(stat), symbol_code );
-       return data.empty() ? fc::variant() : system_token_abi_ser.binary_to_variant( "currency_stats", data, abi_serializer_max_time );
+        auto symb = eosio::chain::symbol::from_string(symbolname);
+        auto symbol_code = symb.to_symbol_code().value;
+        vector<char> data = get_row_by_account( N(eosio.token), symbol_code, N(stat), symbol_code );
+        return data.empty() ? fc::variant() : system_token_abi_ser.binary_to_variant( "currency_stats", data, abi_serializer_max_time );
     }
 
     fc::variant get_dao_stats( const string& symbolname ) {
-       auto symb = eosio::chain::symbol::from_string(symbolname);
-       auto symbol_code = symb.to_symbol_code().value;
-       vector<char> data = get_row_by_account( N(token.dao), symbol_code, N(stat), symbol_code );
-       return data.empty() ? fc::variant() : token_abi_ser.binary_to_variant( "currency_stats", data, abi_serializer_max_time );
+        auto symb = eosio::chain::symbol::from_string(symbolname);
+        auto symbol_code = symb.to_symbol_code().value;
+        vector<char> data = get_row_by_account( N(token.dao), symbol_code, N(stat), symbol_code );
+        return data.empty() ? fc::variant() : token_abi_ser.binary_to_variant( "currency_stats", data, abi_serializer_max_time );
     }
 
-   uint64_t microseconds_since_epoch_of_iso_string( const fc::variant& v ) {
-      return static_cast<uint64_t>( time_point::from_iso_string( v.as_string() ).time_since_epoch().count() );
-   }
+    uint64_t microseconds_since_epoch_of_iso_string( const fc::variant& v ) {
+        return static_cast<uint64_t>( time_point::from_iso_string( v.as_string() ).time_since_epoch().count() );
+    }
 
-   abi_serializer donation_abi_ser;
-   abi_serializer token_abi_ser;
-   abi_serializer system_token_abi_ser;
-   abi_serializer system_abi_ser;
-   abi_serializer custodian_abi_ser;
+    abi_serializer donation_abi_ser;
+    abi_serializer token_abi_ser;
+    abi_serializer system_token_abi_ser;
+    abi_serializer system_abi_ser;
+    abi_serializer custodian_abi_ser;
+    abi_serializer directory_abi_ser;
+    abi_serializer voting_abi_ser;
 };
 
 
