@@ -9,3 +9,5 @@ cd /src
 
 printf "\t${GREEN}=========== Running tests ===========${NC}\n\n"
 ./build/tests/unit_test
+# For debugging
+#./build/tests/unit_test -- --verbose

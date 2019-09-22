@@ -27,12 +27,13 @@ BOOST_FIXTURE_TEST_CASE( donate_receive, eosdao_tester ) try {
     BOOST_REQUIRE_EQUAL( core_sym::from_string("1000.0000"), get_system_balance( "donation.dao" ) );
 
    BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor1.dao" ) );
-printf("Running donate_receive complete...\n");
+//printf("Running donate_receive complete...\n");
 
 } FC_LOG_AND_RETHROW()
 
 
 BOOST_FIXTURE_TEST_CASE( vote_weight_decay, eosdao_tester ) try {
+    printf("Running vote_weight_decay...\n");
 
     BOOST_REQUIRE_EQUAL( core_sym::from_string("1000.0000"), get_system_balance( "donor1.dao" ) );
     BOOST_REQUIRE_EQUAL( core_sym::from_string("10000.0000"), get_system_balance( "donor2.dao" ) );
@@ -43,9 +44,7 @@ BOOST_FIXTURE_TEST_CASE( vote_weight_decay, eosdao_tester ) try {
 
     transfer( "donor2.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor2.dao" );
 
-    printf("Waiting 1 hour...\n");
     produce_blocks(one_hour_blocks);
-    printf("That was fast...\n");
 
     transfer( "donor3.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor3.dao" );
 

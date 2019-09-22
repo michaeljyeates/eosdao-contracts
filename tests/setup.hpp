@@ -15,7 +15,7 @@ struct contr_config {
 };
 
 void basic_setup() {
-    printf("Running basic_setup...\n");
+//    printf("Running basic_setup...\n");
     produce_blocks( 2 );
 
     create_accounts({ N(eosio.token), N(eosio.ram), N(eosio.ramfee), N(eosio.stake),
@@ -59,7 +59,7 @@ void basic_setup() {
 }
 
 void deploy_contracts() {
-    printf("Running deploy_contracts...\n");
+//    printf("Running deploy_contracts...\n");
 
     set_code( N(token.dao), testing::contracts::token_wasm() );
     set_abi( N(token.dao), testing::contracts::token_abi().data() );
@@ -113,7 +113,7 @@ void deploy_contracts() {
 }
 
 void configure_contracts() {
-    printf("Running configure_contracts...\n");
+//    printf("Running configure_contracts...\n");
 
     extended_asset lockup = extended_asset(asset(0, symbol(4, "DAO")), N(token.dao));
     extended_asset reqpay = extended_asset(asset(1, symbol(4, "EOS")), N(eosio.token));
@@ -137,7 +137,7 @@ void configure_contracts() {
 }
 
 void set_permissions(){
-    printf("Running set_permissions...\n");
+//    printf("Running set_permissions...\n");
     // Add code rights for the donation contract so it can call issue
     set_code_perms(N(token.dao), N(donation.dao), N(issue));
     link_perms(N(token.dao), N(token.dao), N(issue), N(issue));
@@ -156,13 +156,13 @@ void set_permissions(){
 }
 
 void create_dao_token(){
-    printf("Running create_dao_token...\n");
+//    printf("Running create_dao_token...\n");
     FC_ASSERT( DAO_SYM_PRECISION == 4, "create_dao_token assumes DAO voting has 4 digits of precision" );
     create_currency( N(token.dao), N(token.dao), dao_sym::from_string("1000000000000.0000") );
 }
 
 void setup_directory(){
-    printf("Running setup_directory...\n");
+//    printf("Running setup_directory...\n");
 
 //       AUTH = 0,
 //       TREASURY = 1,
@@ -180,7 +180,7 @@ void setup_directory(){
 }
 
 void remaining_setup() {
-    printf("Running remaining_setup...\n");
+//    printf("Running remaining_setup...\n");
     produce_blocks();
 
     create_account_with_resources( N(donor1.dao), config::system_account_name, core_sym::from_string("1000.0000"), false );
