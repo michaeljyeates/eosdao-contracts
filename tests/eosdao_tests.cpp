@@ -81,19 +81,15 @@ BOOST_FIXTURE_TEST_CASE( voting, eosdao_tester ) try {
     transfer( "donor2.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor2.dao" );
     transfer( "donor3.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor3.dao" );
     transfer( "donor4.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor4.dao" );
-    transfer( "donor5.dao", "donation.dao", core_sym::from_string("10000000.0000"), "donor5.dao" );
 
     BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor1.dao" ) );
     BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor2.dao" ) );
     BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor3.dao" ) );
     BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor4.dao" ) );
-    BOOST_REQUIRE_EQUAL( dao_sym::from_string("10000000.0000"), get_dao_balance( "donor5.dao" ) );
 
     uint64_t weight_1 = get_voter_weight(N(donor1.dao));
-    uint64_t weight_5 = get_voter_weight(N(donor5.dao));
 
     BOOST_REQUIRE_EQUAL(weight_1, 10000000);
-    BOOST_REQUIRE_EQUAL(weight_5, 100000000000);
 
     memberreg(N(donor1.dao), "1df37bdb72c0be963ef2bdfe9b7ef10b", N(eosdao), N(donor1.dao));
     memberreg(N(donor2.dao), "1df37bdb72c0be963ef2bdfe9b7ef10b", N(eosdao), N(donor2.dao));
@@ -116,6 +112,19 @@ BOOST_FIXTURE_TEST_CASE( voting, eosdao_tester ) try {
     vote(N(donor2.dao), votes2, N(eosdao), N(donor2.dao));
     vote(N(donor3.dao), votes3, N(eosdao), N(donor3.dao));
     vote(N(donor4.dao), votes4, N(eosdao), N(donor4.dao));
+
+    BOOST_REQUIRE_EQUAL(
+        error("assertion failure with message: ERR::NEWPERIOD_VOTER_ENGAGEMENT_LOW_ACTIVATE::Voter engagement is insufficient to activate the DAC."),
+        newperiod(string("My newperiod message"), N(eosdao), N(donor1.dao))
+    );
+
+    // donor5 is required to unlock
+    transfer( "donor5.dao", "donation.dao", core_sym::from_string("10000000.0000"), "donor5.dao" );
+    BOOST_REQUIRE_EQUAL( dao_sym::from_string("10000000.0000"), get_dao_balance( "donor5.dao" ) );
+
+    uint64_t weight_5 = get_voter_weight(N(donor5.dao));
+    BOOST_REQUIRE_EQUAL(weight_5, 100000004456);
+
     vote(N(donor5.dao), votes5, N(eosdao), N(donor5.dao));
 
     BOOST_REQUIRE_EQUAL(
