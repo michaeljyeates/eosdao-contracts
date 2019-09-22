@@ -183,6 +183,7 @@ void setup_directory(){
     regaccount( N(eosdao), N(auth.dao), 0, N(auth.dao) );
     regaccount( N(eosdao), N(steward.dao), 2, N(auth.dao) );
     regaccount( N(eosdao), N(voting.dao), 8, N(auth.dao) );
+    regaccount( N(eosdao), N(voting.dao), 9, N(auth.dao) );
 }
 
 void register_candidates(){
