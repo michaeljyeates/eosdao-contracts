@@ -38,13 +38,13 @@ BOOST_FIXTURE_TEST_CASE( vote_weight_decay, eosdao_tester ) try {
     BOOST_REQUIRE_EQUAL( core_sym::from_string("10000.0000"), get_system_balance( "donor2.dao" ) );
     BOOST_REQUIRE_EQUAL( core_sym::from_string("100000.0000"), get_system_balance( "donor3.dao" ) );
 
-   const uint64_t one_day_blocks = 60 * 60 * 24 * 2;
+   const uint64_t one_hour_blocks = 60 * 60 * 2;
 //    const uint64_t six_months_blocks = 60 * 60 * 2;
 
     transfer( "donor2.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor2.dao" );
 
-    printf("Waiting 1 day...\n");
-    produce_blocks(one_day_blocks);
+    printf("Waiting 1 hour...\n");
+    produce_blocks(one_hour_blocks);
     printf("That was fast...\n");
 
     transfer( "donor3.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor3.dao" );
@@ -53,11 +53,10 @@ BOOST_FIXTURE_TEST_CASE( vote_weight_decay, eosdao_tester ) try {
 
     uint64_t weight_2 = get_voter_weight(N(donor2.dao));
     uint64_t weight_3 = get_voter_weight(N(donor3.dao));
-    printf("Weight 3 : %d, Weight 2 : %d\n", (int)weight_3, (int)weight_2);
 
     BOOST_REQUIRE_EQUAL(weight_2, 10000000);
-    // Weight of donor3 should be more
-    BOOST_REQUIRE_EQUAL(weight_3, 10038582);
+    // Weight of donor3 should include 1 hour of vote weight increase
+    BOOST_REQUIRE_EQUAL(weight_3, 10001604);
 
 } FC_LOG_AND_RETHROW()
 

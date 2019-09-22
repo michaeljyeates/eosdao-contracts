@@ -13,7 +13,6 @@
 
 #include <string>
 
-
 namespace eosdao {
 
     using namespace eosio;
