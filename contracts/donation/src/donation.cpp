@@ -18,7 +18,7 @@ namespace eosdao {
         // Receiving donation, send inline action to issue tokens back to the sender
         const asset dao_quantity = asset(quantity.amount, symbol{symbol_code("DAO"), 4});
 
-        auto dac = dacdir::dac_for_id("eosdao"_n);
+        auto dac = directory::dac_for_id("eosdao"_n);
         eosio::name token_contract = dac.symbol.get_contract();
 
         string donate_memo = "Thank you for your donation to EOS DAO";
