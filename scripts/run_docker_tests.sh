@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 
-docker build -t eosdao/contracts:v1 .
+TAG=v1
+
+docker build -t eosdao/contracts:$TAG .
+docker run -t eosdao/contracts:$TAG
