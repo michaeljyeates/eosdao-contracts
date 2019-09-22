@@ -8,6 +8,6 @@ cd /src
 ./scripts/build.sh -y
 
 printf "\t${GREEN}=========== Running tests ===========${NC}\n\n"
-#./build/tests/unit_test
+./build/tests/unit_test
 # For debugging
-./build/tests/unit_test -- --verbose
+#./build/tests/unit_test -- --verbose
