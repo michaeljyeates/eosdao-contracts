@@ -1,0 +1,21 @@
+<h1 class="contract">balanceobsv</h1>
+
+---
+spec_version: "0.2.0"
+title: Internal Use
+summary: 'External notification of balance change'
+icon: @ICON_BASE_URL@/@TRANSFER_ICON_URI@
+---
+
+Internal use only DO NOT USE
+
+<h1 class="contract">resetweights</h1>
+
+---
+spec_version: "0.2.0"
+title: Admin Use
+summary: 'Clears weights table'
+icon: @ICON_BASE_URL@/@TRANSFER_ICON_URI@
+---
+
+Admin use only
