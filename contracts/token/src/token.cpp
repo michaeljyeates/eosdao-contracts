@@ -18,7 +18,7 @@ namespace eosdao {
 
         stats statstable( get_self(), sym.code().raw() );
         auto existing = statstable.find( sym.code().raw() );
-        check( existing == statstable.end(), "voting with symbol already exists" );
+        check( existing == statstable.end(), "token with symbol already exists" );
 
         statstable.emplace( get_self(), [&]( auto& s ) {
            s.supply.symbol = maximum_supply.symbol;
