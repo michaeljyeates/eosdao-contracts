@@ -7,6 +7,14 @@ void issue( const asset& amount, const name& manager = config::system_account_na
     );
 }
 
+void issue_dao( const name& to, const asset& quantity, const name& manager = config::system_account_name ) {
+    base_tester::push_action( N(token.dao), N(issue), manager, mutable_variant_object()
+            ("to",       to )
+            ("quantity", quantity )
+            ("memo",     "")
+    );
+}
+
 void transfer( const name& from, const name& to, const asset& amount, const name& manager = config::system_account_name ) {
     base_tester::push_action( N(eosio.token), N(transfer), manager, mutable_variant_object()
             ("from",    from)
