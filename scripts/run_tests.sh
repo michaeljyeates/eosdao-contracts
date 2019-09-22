@@ -14,5 +14,5 @@ pushd build &> /dev/null
 cmake ../
 make -j $CPU_CORES
 printf "\t=========== Running tests ===========\n\n"
-./tests/unit_test
+./tests/unit_test -- --verbose
 popd &> /dev/null

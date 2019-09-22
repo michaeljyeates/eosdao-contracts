@@ -14,7 +14,7 @@
 
 using namespace eosdao;
 
-BOOST_AUTO_TEST_SUITE( eosdao_token_tests )
+BOOST_AUTO_TEST_SUITE( eosdao_tests )
 
 BOOST_FIXTURE_TEST_CASE( donate_receive, eosdao_tester ) try {
     printf("Running donate_receive...\n");

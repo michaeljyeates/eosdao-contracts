@@ -16,7 +16,7 @@ namespace eosdao {
         check( maximum_supply.is_valid(), "invalid supply");
         check( maximum_supply.amount > 0, "max-supply must be positive");
 
-        stats statstable( get_self(), sym.code().raw() );
+        stat_table statstable( get_self(), sym.code().raw() );
         auto existing = statstable.find( sym.code().raw() );
         check( existing == statstable.end(), "token with symbol already exists" );
 
@@ -38,7 +38,7 @@ namespace eosdao {
         check( sym.is_valid(), "invalid symbol name" );
         check( memo.size() <= 256, "memo has more than 256 bytes" );
 
-        stats statstable( get_self(), sym.code().raw() );
+        stat_table statstable( get_self(), sym.code().raw() );
         auto existing = statstable.find( sym.code().raw() );
         check( existing != statstable.end(), "voting with symbol does not exist, create voting before issue" );
         const auto& st = *existing;
@@ -77,7 +77,7 @@ namespace eosdao {
         require_auth( from );
         check( is_account( to ), "to account does not exist");
         auto sym = quantity.symbol.code();
-        stats statstable( get_self(), sym.raw() );
+        stat_table statstable( get_self(), sym.raw() );
         const auto& st = statstable.get( sym.raw() );
 
         require_recipient( to );
@@ -171,7 +171,7 @@ namespace eosdao {
     // Private methods
 
     void token::sub_balance( const name& owner, const asset& value ) {
-       accounts from_acnts( get_self(), owner.value );
+       account_table from_acnts( get_self(), owner.value );
 
        const auto& from = from_acnts.get( value.symbol.code().raw(), "no balance object found" );
        check( from.balance.amount >= value.amount, "overdrawn balance" );
@@ -183,7 +183,7 @@ namespace eosdao {
 
     void token::add_balance( const name& owner, const asset& value, const name& ram_payer )
     {
-       accounts to_acnts( get_self(), owner.value );
+       account_table to_acnts( get_self(), owner.value );
        auto to = to_acnts.find( value.symbol.code().raw() );
        if( to == to_acnts.end() ) {
           to_acnts.emplace( ram_payer, [&]( auto& a ){

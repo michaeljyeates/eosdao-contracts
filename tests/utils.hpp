@@ -18,7 +18,7 @@ asset get_system_balance( const account_name& act, symbol balance_symbol = symbo
 
 asset get_dao_balance( const account_name& act, symbol balance_symbol = symbol{DAO_SYM} ) {
     vector<char> data = get_row_by_account( N(token.dao), act, N(accounts), balance_symbol.to_symbol_code().value );
-    return data.empty() ? asset(0, balance_symbol) : token_abi_ser.binary_to_variant("account", data, abi_serializer_max_time)["balance"].as<asset>();
+    return data.empty() ? asset(0, balance_symbol) : token_abi_ser.binary_to_variant("account_type", data, abi_serializer_max_time)["balance"].as<asset>();
 }
 
 
