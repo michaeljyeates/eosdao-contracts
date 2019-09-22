@@ -112,9 +112,14 @@ void nominatecand(const name& cand, const asset& requestedpay, const name& dac_i
     );
 }
 
-void newperiod(const string& message, const name& dac_id, const name& manager = config::system_account_name){
-    base_tester::push_action( N(steward.dao), N(newperiode), manager, mutable_variant_object()
-            ("message", message )
-            ("dac_id",  dac_id )
-    );
+action_result newperiod(const string& message, const name& dac_id, const name& manager = config::system_account_name){
+    action act;
+    act.account = N(steward.dao);
+    act.name = N(newperiode);
+
+    string action_type_name = custodian_abi_ser.get_action_type(act.name);
+    variant_object data = mutable_variant_object()("message", message)("dac_id", dac_id);
+    act.data = custodian_abi_ser.variant_to_binary(action_type_name , data, abi_serializer_max_time );
+
+    return base_tester::push_action(std::move(act), uint64_t(manager));
 }

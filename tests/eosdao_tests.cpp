@@ -107,14 +107,21 @@ BOOST_FIXTURE_TEST_CASE( voting, eosdao_tester ) try {
     vector<name> votes4 = {N(steward1.dao), N(steward3.dao), N(steward4.dao)};
     vector<name> votes5 = {N(steward1.dao), N(steward3.dao), N(steward4.dao)};
 
+    BOOST_REQUIRE_EQUAL(
+            error("assertion failure with message: ERR::NEWPERIOD_VOTER_ENGAGEMENT_LOW_ACTIVATE::Voter engagement is insufficient to activate the DAC."),
+            newperiod(string("My newperiod message"), N(eosdao), N(donor1.dao))
+    );
+
     vote(N(donor1.dao), votes1, N(eosdao), N(donor1.dao));
     vote(N(donor2.dao), votes2, N(eosdao), N(donor2.dao));
     vote(N(donor3.dao), votes3, N(eosdao), N(donor3.dao));
     vote(N(donor4.dao), votes4, N(eosdao), N(donor4.dao));
     vote(N(donor5.dao), votes5, N(eosdao), N(donor5.dao));
 
-    newperiod(string("My newperiod message"), N(eosdao), N(donor1.dao));
-
+    BOOST_REQUIRE_EQUAL(
+            success(),
+            newperiod(string("My newperiod message"), N(eosdao), N(donor1.dao))
+    );
 
 } FC_LOG_AND_RETHROW()
 
