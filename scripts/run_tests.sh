@@ -5,6 +5,9 @@ printf "\t=========== Building eosdao.contracts ===========\n\n"
 RED='\033[0;31m'
 NC='\033[0m'
 
+# set to installed dir
+export eosio_DIR=~/eosio/1.8
+
 CPU_CORES=$(getconf _NPROCESSORS_ONLN)
 mkdir -p build
 pushd build &> /dev/null
