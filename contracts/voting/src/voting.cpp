@@ -2,6 +2,7 @@
 
 using namespace eosio;
 using namespace eosdac;
+using eosdac::custodian::tables::weight_table;
 
 namespace eosdao {
 
@@ -49,7 +50,7 @@ namespace eosdao {
         uint64_t vote_weight = get_vote_weight(new_tokens, dac_id);
 
         // update vote weights table
-        weights voter_weights( get_self(), dac_id.value );
+        weight_table voter_weights( get_self(), dac_id.value );
         auto existing = voter_weights.find( owner.value );
         uint64_t old_weight = 0;
         if( existing == voter_weights.end() ) {

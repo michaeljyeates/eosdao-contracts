@@ -8,6 +8,7 @@
 #include <libeosdac/directory.hpp>
 #include <libeosdac/token.hpp>
 #include <libeosdac/notify.hpp>
+#include <libeosdac/custodian.hpp>
 
 using namespace eosdac;
 using namespace eosdac::token::tables;
@@ -16,6 +17,7 @@ using namespace std;
 
 using eosdac::notify::types::account_balance_delta;
 using eosdac::notify::types::account_weight_delta;
+using eosdac::custodian::types::vote_weight_type;
 
 namespace eosdao {
 
@@ -50,14 +52,8 @@ namespace eosdao {
            };
 
            // Standard voting contract tables
-           struct [[eosio::table]] vote_weight {
-               name     voter;
-               uint64_t weight;
+           struct [[eosio::table]] weights : vote_weight_type {};
 
-               uint64_t primary_key()const { return voter.value; }
-           };
-
-           typedef eosio::multi_index< "weights"_n, vote_weight > weights;
 
            void update_vote_weight(name owner, asset new_tokens, name dac_id);
            uint64_t get_vote_weight(asset quantity, name dac_id);

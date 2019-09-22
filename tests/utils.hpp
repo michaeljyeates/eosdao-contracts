@@ -8,7 +8,7 @@ uint64_t get_voter_weight( const name& voter ){
     if (data.empty()){
         printf("DATA empty in get_voter_weight\n");
     }
-    return data.empty() ? 0 : voting_abi_ser.binary_to_variant( "vote_weight", data, abi_serializer_max_time )["weight"].as<uint64_t>();
+    return data.empty() ? 0 : voting_abi_ser.binary_to_variant( "vote_weight_type", data, abi_serializer_max_time )["weight"].as<uint64_t>();
 }
 
 asset get_system_balance( const account_name& act, symbol balance_symbol = symbol{CORE_SYM} ) {
