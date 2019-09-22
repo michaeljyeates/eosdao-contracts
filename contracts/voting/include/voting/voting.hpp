@@ -6,10 +6,16 @@
 #include <math.h>
 
 #include <libeosdac/directory.hpp>
+#include <libeosdac/token.hpp>
+#include <libeosdac/notify.hpp>
 
 using namespace eosdac;
+using namespace eosdac::token::tables;
 using namespace eosio;
 using namespace std;
+
+using eosdac::notify::types::account_balance_delta;
+using eosdac::notify::types::account_weight_delta;
 
 namespace eosdao {
 
@@ -58,15 +64,6 @@ namespace eosdao {
       public:
          using contract::contract;
 
-       /* TODO : Use a common eosdac include */
-       struct account_balance_delta {
-           eosio::name    account;
-           eosio::asset   balance_delta;
-       };
-       struct account_weight_delta {
-           eosio::name    account;
-           uint64_t       weight_delta;
-       };
 
 
        /**
@@ -83,11 +80,31 @@ namespace eosdao {
           * If validation is successful the weight of each account will be updated to reflect the weight at the time
           * of the balance delta.
           */
+       ACTION balanceobsv(vector<account_balance_delta> account_balance_deltas, name dac_id);
 
-           ACTION balanceobsv(vector<account_balance_delta> account_balance_deltas, name dac_id);
+       /**
+      * Assert unlock action
+      *
+      * @details Asserts if the DAC is still locked and has not crossed activation threshold
+      *
+      * @param dac_id - The dac_id as set in the dacdirectory contract
+      *
+      * If the DAC has crossed the activation threshold then this action will do nothing.
+      */
+       ACTION assertunlock(name dac_id);
 
-           ACTION resetweights(name dac_id);
-
+#ifdef DEBUG
+        /**
+      * Reset weights action
+      *
+      * @details Development action to clear the weights
+      *
+      * @param dac_id - The dac_id as set in the dacdirectory contract
+      *
+      * If the DAC has crossed the activation threshold then this action will do nothing.
+      */
+       ACTION resetweights(name dac_id);
+#endif
 
    };
 } /// namespace eosdao

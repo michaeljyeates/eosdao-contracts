@@ -142,21 +142,21 @@ void configure_contracts() {
 }
 
 void set_permissions(){
-//    printf("Running set_permissions...\n");
     // Add code rights for the donation contract so it can call issue
     set_code_perms(N(token.dao), N(donation.dao), N(issue));
     link_perms(N(token.dao), N(token.dao), N(issue), N(issue));
     // Add code rights to the token contract so that it can transfer from itself
     set_code_perms(N(token.dao), N(token.dao), N(xfer));
     link_perms(N(token.dao), N(token.dao), N(transfer), N(xfer));
-    // Notify from voting contract to custodian
+    // Notify from token contract to voting
     set_code_perms(N(token.dao), N(token.dao), N(notify));
     link_perms(N(token.dao), N(voting.dao), N(balanceobsv), N(notify));
-//       link_perms(N(token.dao), N(voting.dao), N(weightobsv), N(notify));
 
-    // so the voting contract can notify the custodian contract
-    set_code_perms(N(voting.dao), N(voting.dao), N(notify));
+    // so the voting contract can notify the custodian contract (and vice versa)
+    vector<name> codes = { N(steward.dao), N(voting.dao) };
+    set_code_perms(N(voting.dao), codes, N(notify));
     link_perms(N(voting.dao), N(steward.dao), N(weightobsv), N(notify));
+    link_perms(N(voting.dao), N(voting.dao), N(assertunlock), N(notify));
 
     // create auth permissions
     vector<permission_level> perms = { {N(auth.dao), N(owner)} };
@@ -165,6 +165,9 @@ void set_permissions(){
     set_code_perms(N(auth.dao), N(steward.dao), N(med), "high");
     set_code_perms(N(auth.dao), N(steward.dao), N(low), "med");
     set_code_perms(N(auth.dao), N(steward.dao), N(one), "low");
+
+    // permissions on custodian account
+
 }
 
 void create_dao_token(){

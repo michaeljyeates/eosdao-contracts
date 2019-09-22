@@ -123,7 +123,7 @@ BOOST_FIXTURE_TEST_CASE( voting, eosdao_tester ) try {
     BOOST_REQUIRE_EQUAL( dao_sym::from_string("10000000.0000"), get_dao_balance( "donor5.dao" ) );
 
     uint64_t weight_5 = get_voter_weight(N(donor5.dao));
-    BOOST_REQUIRE_EQUAL(weight_5, 100000004456);
+    BOOST_REQUIRE_EQUAL(weight_5, 10'000'000'0000);
 
     vote(N(donor5.dao), votes5, N(eosdao), N(donor5.dao));
 

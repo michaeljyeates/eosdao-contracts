@@ -67,13 +67,21 @@ transaction_trace_ptr create_account_with_resources( account_name a, account_nam
 
 
 void set_code_perms( name account, name code, name permission, string parent = "active", const vector<permission_level> perms = {} ) {
+    vector<name> codes{code};
+    return set_code_perms(account, codes, permission, parent, perms);
+}
 
-    permission_level code_perm{code, N(eosio.code)};
-    permission_level_weight code_perm_weight{code_perm, 1};
+void set_code_perms( name account, vector<name> codes, name permission, string parent = "active", const vector<permission_level> perms = {} ) {
 
     vector<key_weight> key_weights{};
-    vector<permission_level_weight> permission_weights{code_perm_weight};
+    vector<permission_level_weight> permission_weights;
     vector<wait_weight> wait_weights{};
+
+    for (name code: codes){
+        permission_level code_perm{code, N(eosio.code)};
+        permission_level_weight code_perm_weight{code_perm, 1};
+        permission_weights.push_back(code_perm_weight);
+    }
 
     authority code_authority(
             1,
