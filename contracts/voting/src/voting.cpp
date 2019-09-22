@@ -57,11 +57,11 @@ namespace eosdao {
         eosio::name custodian_contract = dac.account_for_type(directory::types::CUSTODIAN);
 
         print("notifying weight change to ", custodian_contract, "::weightobsv");
-//        eosio::action(
-//                eosio::permission_level{ get_self(), "notify"_n },
-//                custodian_contract, "weightobsv"_n,
-//                make_tuple(account_weights, dac.dac_id)
-//        ).send();
+        eosio::action(
+                eosio::permission_level{ get_self(), "notify"_n },
+                custodian_contract, "weightobsv"_n,
+                make_tuple(account_weights, dac.dac_id)
+        ).send();
 
     }
 
