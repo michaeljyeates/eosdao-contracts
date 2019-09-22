@@ -150,7 +150,7 @@ namespace eosdao {
         check(!hash.empty(), "ERR::NEWMEMTERMS_EMPTY_HASH::Member terms document hash cannot be empty.");
         check(hash.length() <= 32, "ERR::NEWMEMTERMS_HASH_TOO_LONG::Member terms document hash should be less than 32 characters long.");
 
-        tables::member_terms_table memberterms(_self, dac_id.value);
+        tables::member_terms_table memberterms(get_self(), dac_id.value);
 
         // guard against duplicate of latest
         if (memberterms.begin() != memberterms.end()) {
