@@ -20,6 +20,7 @@ namespace eosdao {
     }
 
     void voting::resetweights(name dac_id) {
+        require_auth(get_self());
         weights voter_weights( get_self(), dac_id.value );
         auto w = voter_weights.begin();
 
