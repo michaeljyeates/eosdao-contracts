@@ -33,10 +33,11 @@ void transfer_dao( const name& from, const name& to, const asset& amount, const 
     );
 }
 
-void vote( const name& voter, const vector<name>& votes, const name& manager = config::system_account_name ) {
-    base_tester::push_action( N(steward.dao), N(votecust), manager, mutable_variant_object()
+void vote( const name& voter, const vector<name>& votes, const name& dac_id, const name& manager = config::system_account_name ) {
+    base_tester::push_action( N(steward.dao), N(votecuste), manager, mutable_variant_object()
             ("voter",    voter)
-            ("votes",      votes )
+            ("newvotes", votes )
+            ("dac_id",   dac_id )
     );
 }
 
@@ -83,6 +84,37 @@ void configure_custodian( const contr_config newconfig, const name& dac_id, cons
                      ("requested_pay_max", newconfig.requested_pay_max)
 
             )
+            ("dac_id",  dac_id )
+    );
+}
+
+void updatememterms(const string& terms, const string& hash, const name& dac_id, const name& manager = config::system_account_name){
+    base_tester::push_action( N(token.dao), N(newmemtermse), manager, mutable_variant_object()
+            ("terms",  terms )
+            ("hash",   hash )
+            ("dac_id", dac_id )
+    );
+}
+
+void memberreg(const name& sender, const string& agreedterms, const name& dac_id, const name& manager = config::system_account_name){
+    base_tester::push_action( N(token.dao), N(memberrege), manager, mutable_variant_object()
+            ("sender",      sender )
+            ("agreedterms", agreedterms )
+            ("dac_id",      dac_id )
+    );
+}
+
+void nominatecand(const name& cand, const asset& requestedpay, const name& dac_id, const name& manager = config::system_account_name){
+    base_tester::push_action( N(steward.dao), N(nominatecane), manager, mutable_variant_object()
+            ("cand",         cand )
+            ("requestedpay", requestedpay )
+            ("dac_id",       dac_id )
+    );
+}
+
+void newperiod(const string& message, const name& dac_id, const name& manager = config::system_account_name){
+    base_tester::push_action( N(steward.dao), N(newperiode), manager, mutable_variant_object()
+            ("message", message )
             ("dac_id",  dac_id )
     );
 }

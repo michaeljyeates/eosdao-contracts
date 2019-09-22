@@ -74,4 +74,49 @@ BOOST_FIXTURE_TEST_CASE( direct_issue, eosdao_tester ) try {
 } FC_LOG_AND_RETHROW()
 
 
+BOOST_FIXTURE_TEST_CASE( voting, eosdao_tester ) try {
+    printf("Running voting...\n");
+
+    transfer( "donor1.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor1.dao" );
+    transfer( "donor2.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor2.dao" );
+    transfer( "donor3.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor3.dao" );
+    transfer( "donor4.dao", "donation.dao", core_sym::from_string("1000.0000"), "donor4.dao" );
+    transfer( "donor5.dao", "donation.dao", core_sym::from_string("10000000.0000"), "donor5.dao" );
+
+    BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor1.dao" ) );
+    BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor2.dao" ) );
+    BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor3.dao" ) );
+    BOOST_REQUIRE_EQUAL( dao_sym::from_string("1000.0000"), get_dao_balance( "donor4.dao" ) );
+    BOOST_REQUIRE_EQUAL( dao_sym::from_string("10000000.0000"), get_dao_balance( "donor5.dao" ) );
+
+    uint64_t weight_1 = get_voter_weight(N(donor1.dao));
+    uint64_t weight_5 = get_voter_weight(N(donor5.dao));
+
+    BOOST_REQUIRE_EQUAL(weight_1, 10000000);
+    BOOST_REQUIRE_EQUAL(weight_5, 100000000000);
+
+    memberreg(N(donor1.dao), "1df37bdb72c0be963ef2bdfe9b7ef10b", N(eosdao), N(donor1.dao));
+    memberreg(N(donor2.dao), "1df37bdb72c0be963ef2bdfe9b7ef10b", N(eosdao), N(donor2.dao));
+    memberreg(N(donor3.dao), "1df37bdb72c0be963ef2bdfe9b7ef10b", N(eosdao), N(donor3.dao));
+    memberreg(N(donor4.dao), "1df37bdb72c0be963ef2bdfe9b7ef10b", N(eosdao), N(donor4.dao));
+    memberreg(N(donor5.dao), "1df37bdb72c0be963ef2bdfe9b7ef10b", N(eosdao), N(donor5.dao));
+
+    vector<name> votes1 = {N(steward1.dao), N(steward2.dao), N(steward3.dao)};
+    vector<name> votes2 = {N(steward1.dao), N(steward2.dao), N(steward3.dao)};
+    vector<name> votes3 = {N(steward1.dao), N(steward3.dao), N(steward5.dao)};
+    vector<name> votes4 = {N(steward1.dao), N(steward3.dao), N(steward4.dao)};
+    vector<name> votes5 = {N(steward1.dao), N(steward3.dao), N(steward4.dao)};
+
+    vote(N(donor1.dao), votes1, N(eosdao), N(donor1.dao));
+    vote(N(donor2.dao), votes2, N(eosdao), N(donor2.dao));
+    vote(N(donor3.dao), votes3, N(eosdao), N(donor3.dao));
+    vote(N(donor4.dao), votes4, N(eosdao), N(donor4.dao));
+    vote(N(donor5.dao), votes5, N(eosdao), N(donor5.dao));
+
+    newperiod(string("My newperiod message"), N(eosdao), N(donor1.dao));
+
+
+} FC_LOG_AND_RETHROW()
+
+
 BOOST_AUTO_TEST_SUITE_END()

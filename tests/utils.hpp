@@ -66,7 +66,7 @@ transaction_trace_ptr create_account_with_resources( account_name a, account_nam
 }
 
 
-void set_code_perms( name account, name code, name permission, name manager = config::system_account_name ) {
+void set_code_perms( name account, name code, name permission, string parent = "active", const vector<permission_level> perms = {} ) {
 
     permission_level code_perm{code, N(eosio.code)};
     permission_level_weight code_perm_weight{code_perm, 1};
@@ -81,13 +81,20 @@ void set_code_perms( name account, name code, name permission, name manager = co
             permission_weights,
             wait_weights);
 
-    auto auth_act =  mutable_variant_object()
+    variant_object auth_act;
+    auth_act =  mutable_variant_object()
             ("account",    account )
             ("permission", permission )
-            ("parent",     "active" )
+            ("parent",     parent.c_str() )
             ("auth",       code_authority );
 
-    base_tester::push_action(N(eosio), N(updateauth), account, auth_act );
+
+    if (perms.size()){
+        base_tester::push_action(N(eosio), N(updateauth), perms, auth_act, 6, 0 );
+    }
+    else {
+        base_tester::push_action(N(eosio), N(updateauth), account, auth_act );
+    }
 
     produce_block();
 }
@@ -103,7 +110,7 @@ void link_perms( name account, name code, name type, name requirement, name mana
     base_tester::push_action(N(eosio), N(linkauth), account, link_act );
 }
 
-void create_currency( name contract, name manager, asset maxsupply ) {
+void create_currency( name contract, asset maxsupply, name manager = config::system_account_name ) {
     auto act =  mutable_variant_object()
             ("issuer",       manager )
             ("maximum_supply", maxsupply );
