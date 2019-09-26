@@ -18,16 +18,6 @@
             ]
         },
         {
-            "name": "activate",
-            "base": "",
-            "fields": [
-                {
-                    "name": "feature_digest",
-                    "type": "checksum256"
-                }
-            ]
-        },
-        {
             "name": "authority",
             "base": "",
             "fields": [
@@ -1567,11 +1557,6 @@
         }
     ],
     "actions": [
-        {
-            "name": "activate",
-            "type": "activate",
-            "ricardian_contract": "---\nspec_version: \"0.2.0\"\ntitle: Activate Protocol Feature\nsummary: 'Activate protocol feature {{nowrap feature_digest}}'\nicon: http://127.0.0.1/ricardian_assets/eosio.contracts/icons/admin.png#9bf1cec664863bd6aaac0f814b235f8799fb02c850e9aa5da34e8a004bd6518e\n---\n\n{{$action.account}} activates the protocol feature with a digest of {{feature_digest}}."
-        },
         {
             "name": "bidname",
             "type": "bidname",

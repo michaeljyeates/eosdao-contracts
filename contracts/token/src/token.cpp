@@ -2,6 +2,7 @@
 
 using namespace eosio;
 using namespace eosdac;
+using namespace eosdac::token;
 
 namespace eosdao {
 
@@ -15,9 +16,9 @@ namespace eosdao {
         check( maximum_supply.is_valid(), "invalid supply");
         check( maximum_supply.amount > 0, "max-supply must be positive");
 
-        stats statstable( get_self(), sym.code().raw() );
+        stat_table statstable( get_self(), sym.code().raw() );
         auto existing = statstable.find( sym.code().raw() );
-        check( existing == statstable.end(), "voting with symbol already exists" );
+        check( existing == statstable.end(), "token with symbol already exists" );
 
         statstable.emplace( get_self(), [&]( auto& s ) {
            s.supply.symbol = maximum_supply.symbol;
@@ -37,7 +38,7 @@ namespace eosdao {
         check( sym.is_valid(), "invalid symbol name" );
         check( memo.size() <= 256, "memo has more than 256 bytes" );
 
-        stats statstable( get_self(), sym.code().raw() );
+        stat_table statstable( get_self(), sym.code().raw() );
         auto existing = statstable.find( sym.code().raw() );
         check( existing != statstable.end(), "voting with symbol does not exist, create voting before issue" );
         const auto& st = *existing;
@@ -76,7 +77,7 @@ namespace eosdao {
         require_auth( from );
         check( is_account( to ), "to account does not exist");
         auto sym = quantity.symbol.code();
-        stats statstable( get_self(), sym.raw() );
+        stat_table statstable( get_self(), sym.raw() );
         const auto& st = statstable.get( sym.raw() );
 
         require_recipient( to );
@@ -89,12 +90,18 @@ namespace eosdao {
         sub_balance( from, quantity );
         add_balance( to, quantity, from );
 
-        vector<account_balance_delta> deltas;
-        deltas.push_back(account_balance_delta{to, quantity});
+        struct account_balance_delta {
+            name    account;
+            asset   balance_delta;
+        };
+        vector<notify::types::account_balance_delta> deltas;
+        deltas.push_back(notify::types::account_balance_delta{to, quantity});
 
         // send inline action to the custodian contract to update any existing votes
-        dacdir::dac dac = dacdir::dac_for_symbol(extended_symbol{quantity.symbol, get_self()});
-        eosio::name vote_contract = dac.account_for_type(dacdir::VOTE);
+        directory::types::dac dac = directory::dac_for_symbol(extended_symbol{quantity.symbol, get_self()});
+        eosio::name vote_contract = dac.account_for_type(directory::types::ROUTER);
+//        auto obsv_action = notify::balanceobsv_action(vote_contract, { { get_self(), "notify"_n } });
+//        obsv_action.send(deltas, "eosdao"_n);
         eosio::action(
                 eosio::permission_level{ get_self(), "notify"_n },
                 vote_contract, "balanceobsv"_n,
@@ -108,22 +115,22 @@ namespace eosdao {
         // agreedterms is expected to be the member terms document hash
         require_auth(sender);
 
-        memterms memberterms(_self, dac_id.value);
+        tables::member_terms_table memberterms(_self, dac_id.value);
 
         check(memberterms.begin() != memberterms.end(), "ERR::MEMBERREG_NO_VALID_TERMS::No valid member terms found.");
 
         auto latest_member_terms = (--memberterms.end());
         check(latest_member_terms->hash == agreedterms, "ERR::MEMBERREG_NOT_LATEST_TERMS::Agreed terms isn't the latest.");
-        regmembers registeredgmembers = regmembers(_self, dac_id.value);
+        member_table registeredgmembers = member_table(_self, dac_id.value);
 
         auto existingMember = registeredgmembers.find(sender.value);
         if (existingMember != registeredgmembers.end()) {
-            registeredgmembers.modify(existingMember, sender, [&](member &mem) {
+            registeredgmembers.modify(existingMember, sender, [&](types::member_type &mem) {
                 mem.agreedtermsversion = latest_member_terms->version;
             });
         }
         else {
-            registeredgmembers.emplace(sender, [&](member &mem) {
+            registeredgmembers.emplace(sender, [&](types::member_type &mem) {
                 mem.sender = sender;
                 mem.agreedtermsversion = latest_member_terms->version;
             });
@@ -132,8 +139,8 @@ namespace eosdao {
 
     void token::newmemtermse(string terms, string hash, name dac_id) {
 
-        dacdir::dac dac = dacdir::dac_for_id(dac_id);
-        eosio::name auth_account = dac.account_for_type(dacdir::AUTH);
+        directory::types::dac dac = directory::dac_for_id(dac_id);
+        eosio::name auth_account = dac.account_for_type(directory::types::AUTH);
         require_auth(auth_account);
 
         // sample IPFS: QmXjkFQjnD8i8ntmwehoAHBfJEApETx8ebScyVzAHqgjpD
@@ -143,7 +150,7 @@ namespace eosdao {
         check(!hash.empty(), "ERR::NEWMEMTERMS_EMPTY_HASH::Member terms document hash cannot be empty.");
         check(hash.length() <= 32, "ERR::NEWMEMTERMS_HASH_TOO_LONG::Member terms document hash should be less than 32 characters long.");
 
-        memterms memberterms(_self, dac_id.value);
+        tables::member_terms_table memberterms(get_self(), dac_id.value);
 
         // guard against duplicate of latest
         if (memberterms.begin() != memberterms.end()) {
@@ -154,7 +161,7 @@ namespace eosdao {
 
         uint64_t next_version = (memberterms.begin() == memberterms.end() ? 0 : (--memberterms.end())->version) + 1;
 
-        memberterms.emplace(auth_account, [&](termsinfo &termsinfo) {
+        memberterms.emplace(auth_account, [&](types::termsinfo_type &termsinfo) {
             termsinfo.terms = terms;
             termsinfo.hash = hash;
             termsinfo.version = next_version;
@@ -164,7 +171,7 @@ namespace eosdao {
     // Private methods
 
     void token::sub_balance( const name& owner, const asset& value ) {
-       accounts from_acnts( get_self(), owner.value );
+       account_table from_acnts( get_self(), owner.value );
 
        const auto& from = from_acnts.get( value.symbol.code().raw(), "no balance object found" );
        check( from.balance.amount >= value.amount, "overdrawn balance" );
@@ -176,7 +183,7 @@ namespace eosdao {
 
     void token::add_balance( const name& owner, const asset& value, const name& ram_payer )
     {
-       accounts to_acnts( get_self(), owner.value );
+       account_table to_acnts( get_self(), owner.value );
        auto to = to_acnts.find( value.symbol.code().raw() );
        if( to == to_acnts.end() ) {
           to_acnts.emplace( ram_payer, [&]( auto& a ){

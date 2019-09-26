@@ -1,11 +1,13 @@
 #include <voting/voting.hpp>
 
 using namespace eosio;
+using namespace eosdac;
+using eosdac::custodian::tables::weight_table;
 
 namespace eosdao {
 
     void voting::balanceobsv(vector<account_balance_delta> account_balance_deltas, name dac_id) {
-        auto dac = dacdir::dac_for_id(dac_id);
+        auto dac = directory::dac_for_id(dac_id);
         auto token_contract = dac.symbol.get_contract();
         require_auth(token_contract);
         auto dac_symbol = dac.symbol.get_symbol();
@@ -18,7 +20,23 @@ namespace eosdao {
         }
     }
 
+    void voting::assertunlock(name dac_id) {
+        auto dac = directory::dac_for_id(dac_id);
+        stat_table statsTable = stat_table(
+                dac.symbol.get_contract(),
+                dac.symbol.get_symbol().code().raw()
+        );
+        auto tokenStats = statsTable.begin();
+        check(tokenStats != statsTable.end(), "ERR::STATS_NOT_FOUND::Stats table not found");
+
+        uint64_t token_current_supply = tokenStats->supply.amount;
+
+        check(token_current_supply > 100'000'0000, "ERR::NEWPERIOD_VOTER_ENGAGEMENT_LOW_ACTIVATE::Voter engagement is insufficient to activate the DAC.");
+    }
+
+#ifdef DEBUG
     void voting::resetweights(name dac_id) {
+        require_auth(get_self());
         weights voter_weights( get_self(), dac_id.value );
         auto w = voter_weights.begin();
 
@@ -26,12 +44,13 @@ namespace eosdao {
             w = voter_weights.erase(w);
         }
     }
+#endif
 
     void voting::update_vote_weight(name owner, asset new_tokens, name dac_id){
         uint64_t vote_weight = get_vote_weight(new_tokens, dac_id);
 
         // update vote weights table
-        weights voter_weights( get_self(), dac_id.value );
+        weight_table voter_weights( get_self(), dac_id.value );
         auto existing = voter_weights.find( owner.value );
         uint64_t old_weight = 0;
         if( existing == voter_weights.end() ) {
@@ -50,18 +69,18 @@ namespace eosdao {
         }
 
         vector<account_weight_delta> account_weights;
-        account_weights.push_back(account_weight_delta{owner, vote_weight});
+        account_weights.push_back(account_weight_delta{owner, static_cast<int64_t>( vote_weight )});
 
-        auto dac = dacdir::dac_for_id(dac_id);
-        eosio::name custodian_contract = dac.account_for_type(dacdir::CUSTODIAN);
-
-//        eosio::action(
-//                eosio::permission_level{ get_self(), "notify"_n },
-//                custodian_contract, "weightobsv"_n,
-//                make_tuple(account_weights, dac.dac_id)
-//        ).send();
+        auto dac = directory::dac_for_id(dac_id);
+        eosio::name custodian_contract = dac.account_for_type(directory::types::CUSTODIAN);
 
         print("notifying weight change to ", custodian_contract, "::weightobsv");
+        eosio::action(
+                eosio::permission_level{ get_self(), "notify"_n },
+                custodian_contract, "weightobsv"_n,
+                make_tuple(account_weights, dac.dac_id)
+        ).send();
+
     }
 
 
